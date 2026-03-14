@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MIPS.Net": {
+      "commandName": "Project",
+      "commandLineArgs": "-c fast_video.asm",
+      "workingDirectory": "C:\\Users\\marco\\OneDrive\\Documentos\\Visual Studio 2022\\Projects\\MIPS.Net\\NetPC\\firmware"
+    }
+  }
+}

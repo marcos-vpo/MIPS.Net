@@ -1,0 +1,62 @@
+{
+  "DataEntries": [],
+  "Rotules": [
+    {
+      "Instructions": [
+        {
+          "MemAddr": 0,
+          "Code": -134086246,
+          "Definition": "li $v0, 410",
+          "Hex": "0x9A 0x01 0x02 0xF8",
+          "Ln": 5
+        },
+        {
+          "MemAddr": 0,
+          "Code": 1275330561,
+          "Definition": "la $a0, ._ffi_wait_up",
+          "Hex": "0x01 0x00 0x04 0x4C",
+          "Ln": 6
+        },
+        {
+          "MemAddr": 0,
+          "Code": 31,
+          "Definition": "syscall",
+          "Hex": "0x1F 0x00 0x00 0x00",
+          "Ln": 7
+        },
+        {
+          "MemAddr": 0,
+          "Code": -67108861,
+          "Definition": "jalf 3",
+          "Hex": "0x03 0x00 0x00 0xFC",
+          "Ln": 8
+        }
+      ],
+      "RotuleN": 0,
+      "Name": "_init:",
+      "Ln": 4
+    },
+    {
+      "Instructions": [
+        {
+          "MemAddr": 0,
+          "Code": -134086256,
+          "Definition": "li $v0, 400",
+          "Hex": "0x90 0x01 0x02 0xF8",
+          "Ln": 10
+        },
+        {
+          "MemAddr": 0,
+          "Code": 201326593,
+          "Definition": "jal ._ffi_wait_up",
+          "Hex": "0x01 0x00 0x00 0x0C",
+          "Ln": 12
+        }
+      ],
+      "RotuleN": 1,
+      "Name": "_ffi_wait_up:",
+      "Ln": 9
+    }
+  ],
+  "SourceFile": "C:\\Users\\marco\\OneDrive\\Documentos\\Visual Studio 2022\\Projects\\MIPS.Net\\NetPC\\firmware\\.\\fast_video.asm_full.asm"
+}

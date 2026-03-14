@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>True</UseWPF>
+	  <!-- Onde você realmente quer que os binários sejam gerados -->
+	  <OutputPath>C:\mOS\bin</OutputPath>
+
+	  <!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+	  <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+
+	  <!-- Remove criação da pasta Debug/Release -->
+	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+	  <!-- Remove criação da pasta com o nome do TargetFramework -->
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+	  <!-- Remove criação da pasta da configuração (Debug/Release) -->
+	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	  <AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+	  <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="firmware\fast_video.mex" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="firmware\FAST_VIDEO.asm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="firmware\fast_video.mex">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MIPS.Compiler\MIPS.Compiler.csproj" />
+    <ProjectReference Include="..\MIPS.DeviceLib\MIPS.DeviceLib.csproj" />
+    <ProjectReference Include="..\MIPS.Net\MIPS.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

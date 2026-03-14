@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MIPS.Compiler": {
+      "commandName": "Project",
+      "commandLineArgs": "-c mShell.asm",
+      "workingDirectory": "C:\\Users\\marco\\OneDrive\\Documentos\\Visual Studio 2022\\Projects\\MIPS.Net\\mShell"
+    }
+  }
+}

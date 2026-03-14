@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Onde você realmente quer que os binários sejam gerados -->
+		<OutputPath>C:\mOS\bin</OutputPath>
+
+		<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+		<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+
+		<!-- Remove criação da pasta Debug/Release -->
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+		<!-- Remove criação da pasta com o nome do TargetFramework -->
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+		<!-- Remove criação da pasta da configuração (Debug/Release) -->
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+		<UseWindowsForms>True</UseWindowsForms>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<Target Name="CopyDependencies" AfterTargets="Build">
+		<Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+	</Target>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MIPS.SDK\MIPS.SDK.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="boot\" />
+		<Folder Include="memory\" />
+		<Folder Include="firmware\" />
+		<Folder Include="docs\" />
+		<Folder Include="drivers\" />
+		<Folder Include="acpi\" />
+		<Folder Include="syscalls\" />
+	</ItemGroup>
+
+</Project>

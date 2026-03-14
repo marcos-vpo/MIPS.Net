@@ -1,0 +1,19 @@
+﻿Tuple of 12+N bytes
+[X][Y][W][H][C][L][V]
+ |	|  |  |	 |	|  |  |--> N'b - Value
+ |  |  |  |  |  |  |-----> 2b  - Value Length 
+ |	|  |  |	 |	|--------> 1b  - Color
+ |	|  |  |	 |-----------> 2b  - height
+ |  |  |  |--------------> 2b  - width
+ |  |  |-----------------> 2b  - pos Y
+ |  |--------------------> 2b  - pos X
+
+
+ [O - Operation Codes]
+ 0x9D - Draw char
+ 0x8F - Draw Line
+ 0x7A - Draw Rectangle
+ 0x7B - Fill Rectangle
+ 0x6A - Draw Circle
+ 0x6B - Fill Circle
+ 0x5E - Draw Image
