@@ -103,9 +103,12 @@ namespace MIPS.Net.InstructionSet
                         while (MIPS_CPU.InLock())
                             Thread.Sleep(100);
 
-                        MIPS_CPU.RequestLock();
-                        MIPS_CPU.Instance.Registers[$"$pc"] = current_addr + 4;
-                        MIPS_CPU.Release();
+                        if (MIPS_CPU.Instance.Registers["$k1"] == 0)
+                        {
+                            MIPS_CPU.RequestLock();
+                            MIPS_CPU.Instance.Registers[$"$pc"] = current_addr + 4;
+                            MIPS_CPU.Release();
+                        }
                     }
                 }
                 catch (Exception ex)

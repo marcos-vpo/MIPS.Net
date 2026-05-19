@@ -39,10 +39,33 @@ namespace MIPS.Net.SoC
                 {
                     if (Registers[$"k1"] == 0)
                     {
-                        pendingInterruption.End();
+                 
 
-                        pendingInterruption = null;
-                        RestoreState();
+                        if (lock_bypass == false)
+                        {
+                            pendingInterruption.End();
+                            pendingInterruption = null;
+                            RestoreState();
+                        }
+                        else
+                        {
+                            pendingInterruption = previous_intr;
+                            _before_intr_program = previous_before_addr;
+
+                            CurrentProgram = programs.FirstOrDefault(p => p.Address == _before_intr_program);
+                            if (CurrentProgram == null)
+                                throw new Exception($"CRITICAL: restore state of program in address '{_before_intr_program}' fail");
+                      //      CurrentProgram.RestoreSavedSate(Registers);
+
+                            Registers["$pc"] = previous_intr_pc;
+
+                            previous_intr = null;
+                            previous_intr_pc = 0;
+                            previous_before_addr = 0;
+
+                            lock_bypass = false;
+                        }
+
                     }
                     else
                     {
@@ -149,13 +172,10 @@ namespace MIPS.Net.SoC
                             while (syscall_instr.Sum(x => x) != 0)
                             {
                                 ProcessInstruction(syscall_instr);
-                                //     Thread.Sleep(2);
-                                if(in_lock == false)
-                                {
-                                    if (Registers["k0"] == 1)
-                                        ProcessInstruction(new byte[4]);
-                                   return;
-                                }
+
+                                while (previous_intr != null)
+                                    Thread.Sleep(10);
+
                                 syscall_pos += 4;
                                 DMA.RequestData(syscall_pos, ref syscall_instr, true);
                             }
@@ -280,7 +300,7 @@ namespace MIPS.Net.SoC
 
 
 
-                    if (in_lock)
+                    if (in_lock && lock_bypass == false)
                         continue;
 
                     if (lock_request)
@@ -395,7 +415,11 @@ namespace MIPS.Net.SoC
             hertz = 0;
         }
 
+        InterruptionEntry previous_intr = null;
+        int previous_intr_pc = 0;
+        int previous_before_addr = 0;
 
+        bool lock_bypass = false;
         InterruptionEntry pendingInterruption = null;
         private static object lckIntr = new object();
         internal void SendInterruption(InterruptionEntry interruption)
@@ -406,35 +430,32 @@ namespace MIPS.Net.SoC
                     pendingInterruption = interruption;
                 else
                 {
-                    while (pendingInterruption.IsProcessing)
+                    if (pendingInterruption.IsProcessing)
                     {
-                        if (interruption.DeviceMemoryAddress > 0)
-                        {
-                            pendingInterruption = interruption;
-                            Registers["pc"] = interruption.HandlerAddress - 4;
-                            Release();
-                            _state_saved = false;
 
-                            break;
-                        }
-                        else
-                        {
-                            Thread.Sleep(100);
-
-                            if (pendingInterruption == null)
-                            {
-                                pendingInterruption = interruption;
-                                break;
-                            }
-                        }
+                        previous_intr = pendingInterruption;
+                        previous_intr_pc = Registers["$pc"] + 4;
+                        previous_before_addr = _before_intr_program;
+                        _before_intr_program = interruption.HandlerAddress;
 
                         pendingInterruption = interruption;
+                        CurrentProgram = programs.FirstOrDefault(p => p.Rotules.Any(r => r.AbsoluteAddr == pendingInterruption.HandlerAddress));
+                        Registers[Registers.PC] = pendingInterruption.HandlerAddress - 4;
+                        ProgramSwitch();
+
+                        Registers[Registers.PC] = pendingInterruption.HandlerAddress;
+
+                        pendingInterruption.Ready = true;
+
+                        lock_bypass = true;
+                        lock_request = false;
                     }
                 }
             }
         }
 
-
+        bool pause_request = false;
+        bool paused = false;
         private bool _state_saved = false;
         private int _before_intr_program = 0;
         internal void SaveState()

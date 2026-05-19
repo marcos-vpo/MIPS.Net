@@ -16,6 +16,7 @@ namespace mShell
 
             char ch = lib.console_readchar();
 
+            return;
             mString str = new mString("Teste 123");
             lib.mem_write(str);
 

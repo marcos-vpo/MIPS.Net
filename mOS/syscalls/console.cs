@@ -18,6 +18,7 @@ namespace mOS.syscalls
             {
                 var ret = cs.ReadKey();
                 byte[] b = new byte[1];
+                b[0] = ret.KeyCode;
                 mos_kernel.ProcessManager.CurrentProcessWrite(0, ref b);
 
                 return 0;
