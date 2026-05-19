@@ -22,13 +22,19 @@ namespace mOS.syscalls
         public void mk_shell()
         {
             MkShell m = new MkShell();
-            m.Start(welcome: false);
+            m.Start(welcome: true);
         }
 
         [Extern]
-        public void p_get_current_pid()
+        public int p_get_current_pid()
         {
-             mos_kernel.ProcessManager.CurrentProcessId();
+          return   mos_kernel.ProcessManager.CurrentProcessId();
+        }
+
+        [Extern]
+        public int p_get_addr()
+        {
+            return mos_kernel.ProcessManager.CurrentProcessAddr();
         }
     }
 }

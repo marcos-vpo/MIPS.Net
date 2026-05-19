@@ -11,6 +11,7 @@ namespace MIPS.Net.IO
     {
         public object Tag { get; set; }
         public byte ID { get; set; }
+
         public int InterruptionCodeClick { get; set; }
 
 

@@ -77,7 +77,7 @@ namespace MIPS.Net.SoC
             return physicalAddress;
         }
 
-        internal static bool IsEnabled()
+        public static bool IsEnabled()
         {
             return _instance.Enabled;
         }

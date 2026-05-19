@@ -1,11 +1,11 @@
 ﻿using MIPS.Compiler;
 using MIPS.Net.SoC;
 
-namespace mOSLib
+namespace mOSLib.functions
 {
-    public static class mSys
+    public class sys
     {
-        public static int syscall(int v0, int? a0 = null, int? a1 = null, int? a2 = null, int? a3 = null, bool k0 = true, int k1 = 0)
+        public  int syscall(int v0, int? a0 = null, int? a1 = null, int? a2 = null, int? a3 = null, bool k0 = true, int k1 = 0)
         {
             // ASM mínimo: apenas o gatilho
             string asm = "syscall";
@@ -40,15 +40,11 @@ namespace mOSLib
             // Higiene pós-syscall
             cpu.Registers["$k0"] = 0;
 
-            return v1v2[0];
+            return v1v2[1];
         }
  
-        public static int yield() { return 0; }
-        public static int uptime() { return 0; }
-
-        internal static int syscall(object v0)
-        {
-            throw new NotImplementedException();
-        }
+        public  int yield() { return 0; }
+        public  int uptime() { return 0; }
+         
     }
 }

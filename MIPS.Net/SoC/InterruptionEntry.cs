@@ -19,14 +19,15 @@ namespace MIPS.Net.SoC
             return $"[{Code}]: INTR_ADDR *{InterruptionAddress}, HNDLR_ADDR: {HandlerAddress}, DEV_PORT_ADDR: {DeviceMemoryAddress}";
         }
 
-        //   private AutoResetEvent _are = new AutoResetEvent(false);
+       //    private AutoResetEvent _are = new AutoResetEvent(false);
 
         public bool IsProcessing { get; private set; }
+        public bool Ready { get; internal set; }
 
         public void WaitInterruptionExecution(bool wait = false)
         {
             IsProcessing = true;
-            //      _are.WaitOne();
+        //         _are.WaitOne();
 
         //    if (wait)
          //      while (IsProcessing)
@@ -36,10 +37,10 @@ namespace MIPS.Net.SoC
         public void End()
         {
             IsProcessing = false;
-            //     if(_are != null )
-            {
-                //         _are.Set();
-            }
+       //        if(_are != null )
+       //     {
+         //               _are.Set();
+       //     }
 
         }
     }

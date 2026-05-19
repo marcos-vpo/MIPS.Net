@@ -197,13 +197,23 @@ namespace MIPS.Net.SoC.__program
                     try
                     {
                         if (o.Ctx != null)
-                            o.Ctx.Unload();
+                        {
+                            o.Asm = null;
+                            o.Ctx.Unload(); 
+                            o.Ctx = null;
+                        }
                     }
                     catch { }
                 }
                 LinkedAssemblies.Item1.Clear();
                 LinkedAssemblies.Item2.Clear();
             }
+            tlb_entries.Clear();
+            MMU.SetTLB(tlb_entries);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         public int FFIWaitUpAddr { get; private set; }

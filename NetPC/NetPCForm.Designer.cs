@@ -28,21 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NetPCForm));
             btTurnOnOff = new Button();
             sanDisplay1 = new SanDisplay();
             menuStrip1 = new MenuStrip();
             machineToolStripMenuItem = new ToolStripMenuItem();
-            resolutionToolStripMenuItem = new ToolStripMenuItem();
-            x200ToolStripMenuItem = new ToolStripMenuItem();
-            x320ToolStripMenuItem = new ToolStripMenuItem();
-            x400ToolStripMenuItem = new ToolStripMenuItem();
-            x480ToolStripMenuItem = new ToolStripMenuItem();
-            x600ToolStripMenuItem = new ToolStripMenuItem();
-            x680ToolStripMenuItem = new ToolStripMenuItem();
-            x600ToolStripMenuItem1 = new ToolStripMenuItem();
-            x720ToolStripMenuItem = new ToolStripMenuItem();
-            x720ToolStripMenuItem1 = new ToolStripMenuItem();
+            newMachineToolStripMenuItem = new ToolStripMenuItem();
+            editMachinesToolStripMenuItem = new ToolStripMenuItem();
             panel1 = new Panel();
+            panel7 = new Panel();
+            panelIntr = new Panel();
+            label7 = new Label();
             panelFFI = new Panel();
             panelClock = new Panel();
             panel6 = new Panel();
@@ -63,17 +59,14 @@
             lbInstEnabled = new CheckBox();
             lbKeyboardPing = new Label();
             panel_io = new Panel();
-            panel7 = new Panel();
-            panelIntr = new Panel();
-            label7 = new Label();
             menuStrip1.SuspendLayout();
             panel1.SuspendLayout();
+            panel7.SuspendLayout();
             panel6.SuspendLayout();
             panel4.SuspendLayout();
             panel2.SuspendLayout();
             panel3.SuspendLayout();
             panel5.SuspendLayout();
-            panel7.SuspendLayout();
             SuspendLayout();
             // 
             // btTurnOnOff
@@ -116,71 +109,23 @@
             // 
             // machineToolStripMenuItem
             // 
-            machineToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { resolutionToolStripMenuItem });
+            machineToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newMachineToolStripMenuItem, editMachinesToolStripMenuItem });
             machineToolStripMenuItem.Name = "machineToolStripMenuItem";
             machineToolStripMenuItem.Size = new Size(65, 20);
             machineToolStripMenuItem.Text = "Machine";
             // 
-            // resolutionToolStripMenuItem
+            // newMachineToolStripMenuItem
             // 
-            resolutionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { x200ToolStripMenuItem, x320ToolStripMenuItem, x400ToolStripMenuItem, x480ToolStripMenuItem, x600ToolStripMenuItem, x680ToolStripMenuItem, x600ToolStripMenuItem1, x720ToolStripMenuItem, x720ToolStripMenuItem1 });
-            resolutionToolStripMenuItem.Name = "resolutionToolStripMenuItem";
-            resolutionToolStripMenuItem.Size = new Size(130, 22);
-            resolutionToolStripMenuItem.Text = "Resolution";
+            newMachineToolStripMenuItem.Name = "newMachineToolStripMenuItem";
+            newMachineToolStripMenuItem.Size = new Size(156, 22);
+            newMachineToolStripMenuItem.Text = "New Machine...";
+            newMachineToolStripMenuItem.Click += newMachineToolStripMenuItem_Click;
             // 
-            // x200ToolStripMenuItem
+            // editMachinesToolStripMenuItem
             // 
-            x200ToolStripMenuItem.Name = "x200ToolStripMenuItem";
-            x200ToolStripMenuItem.Size = new Size(121, 22);
-            x200ToolStripMenuItem.Text = "320x200";
-            // 
-            // x320ToolStripMenuItem
-            // 
-            x320ToolStripMenuItem.Name = "x320ToolStripMenuItem";
-            x320ToolStripMenuItem.Size = new Size(121, 22);
-            x320ToolStripMenuItem.Text = "480x320";
-            // 
-            // x400ToolStripMenuItem
-            // 
-            x400ToolStripMenuItem.Name = "x400ToolStripMenuItem";
-            x400ToolStripMenuItem.Size = new Size(121, 22);
-            x400ToolStripMenuItem.Text = "600x400";
-            // 
-            // x480ToolStripMenuItem
-            // 
-            x480ToolStripMenuItem.Name = "x480ToolStripMenuItem";
-            x480ToolStripMenuItem.Size = new Size(121, 22);
-            x480ToolStripMenuItem.Text = "720x480";
-            // 
-            // x600ToolStripMenuItem
-            // 
-            x600ToolStripMenuItem.Name = "x600ToolStripMenuItem";
-            x600ToolStripMenuItem.Size = new Size(121, 22);
-            x600ToolStripMenuItem.Text = "800x600";
-            // 
-            // x680ToolStripMenuItem
-            // 
-            x680ToolStripMenuItem.Name = "x680ToolStripMenuItem";
-            x680ToolStripMenuItem.Size = new Size(121, 22);
-            x680ToolStripMenuItem.Text = "900x680";
-            // 
-            // x600ToolStripMenuItem1
-            // 
-            x600ToolStripMenuItem1.Name = "x600ToolStripMenuItem1";
-            x600ToolStripMenuItem1.Size = new Size(121, 22);
-            x600ToolStripMenuItem1.Text = "1024x600";
-            // 
-            // x720ToolStripMenuItem
-            // 
-            x720ToolStripMenuItem.Name = "x720ToolStripMenuItem";
-            x720ToolStripMenuItem.Size = new Size(121, 22);
-            x720ToolStripMenuItem.Text = "1200x720";
-            // 
-            // x720ToolStripMenuItem1
-            // 
-            x720ToolStripMenuItem1.Name = "x720ToolStripMenuItem1";
-            x720ToolStripMenuItem1.Size = new Size(121, 22);
-            x720ToolStripMenuItem1.Text = "1366x720";
+            editMachinesToolStripMenuItem.Name = "editMachinesToolStripMenuItem";
+            editMachinesToolStripMenuItem.Size = new Size(156, 22);
+            editMachinesToolStripMenuItem.Text = "Edit Machines";
             // 
             // panel1
             // 
@@ -195,6 +140,35 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(196, 165);
             panel1.TabIndex = 8;
+            // 
+            // panel7
+            // 
+            panel7.BackColor = Color.FromArgb(64, 64, 64);
+            panel7.Controls.Add(panelIntr);
+            panel7.Controls.Add(label7);
+            panel7.Location = new Point(93, 3);
+            panel7.Name = "panel7";
+            panel7.Size = new Size(38, 39);
+            panel7.TabIndex = 17;
+            // 
+            // panelIntr
+            // 
+            panelIntr.BackColor = Color.DimGray;
+            panelIntr.Location = new Point(2, 30);
+            panelIntr.Name = "panelIntr";
+            panelIntr.Size = new Size(34, 6);
+            panelIntr.TabIndex = 16;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 10F);
+            label7.ForeColor = SystemColors.ButtonFace;
+            label7.Location = new Point(4, 6);
+            label7.Name = "label7";
+            label7.Size = new Size(30, 19);
+            label7.TabIndex = 3;
+            label7.Text = "INT";
             // 
             // panelFFI
             // 
@@ -299,15 +273,15 @@
             panel3.Controls.Add(label1);
             panel3.Location = new Point(776, 84);
             panel3.Name = "panel3";
-            panel3.Size = new Size(46, 384);
+            panel3.Size = new Size(62, 384);
             panel3.TabIndex = 10;
             // 
             // panel_io_interruption
             // 
             panel_io_interruption.BackColor = Color.Goldenrod;
-            panel_io_interruption.Location = new Point(6, 275);
+            panel_io_interruption.Location = new Point(12, 180);
             panel_io_interruption.Name = "panel_io_interruption";
-            panel_io_interruption.Size = new Size(31, 10);
+            panel_io_interruption.Size = new Size(31, 7);
             panel_io_interruption.TabIndex = 3;
             panel_io_interruption.Visible = false;
             // 
@@ -316,7 +290,7 @@
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.ForeColor = SystemColors.ButtonFace;
-            label1.Location = new Point(6, 144);
+            label1.Location = new Point(12, 49);
             label1.Name = "label1";
             label1.Size = new Size(34, 105);
             label1.TabIndex = 0;
@@ -382,39 +356,11 @@
             // panel_io
             // 
             panel_io.BackColor = Color.SeaGreen;
-            panel_io.Location = new Point(822, 84);
+            panel_io.Location = new Point(839, 163);
             panel_io.Name = "panel_io";
-            panel_io.Size = new Size(67, 384);
+            panel_io.Size = new Size(50, 305);
             panel_io.TabIndex = 12;
-            // 
-            // panel7
-            // 
-            panel7.BackColor = Color.FromArgb(64, 64, 64);
-            panel7.Controls.Add(panelIntr);
-            panel7.Controls.Add(label7);
-            panel7.Location = new Point(93, 3);
-            panel7.Name = "panel7";
-            panel7.Size = new Size(38, 39);
-            panel7.TabIndex = 17;
-            // 
-            // panelIntr
-            // 
-            panelIntr.BackColor = Color.DimGray;
-            panelIntr.Location = new Point(2, 30);
-            panelIntr.Name = "panelIntr";
-            panelIntr.Size = new Size(34, 6);
-            panelIntr.TabIndex = 16;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Font = new Font("Segoe UI", 10F);
-            label7.ForeColor = SystemColors.ButtonFace;
-            label7.Location = new Point(4, 6);
-            label7.Name = "label7";
-            label7.Size = new Size(30, 19);
-            label7.TabIndex = 3;
-            label7.Text = "INT";
+            panel_io.Paint += panel_io_Paint;
             // 
             // NetPCForm
             // 
@@ -435,6 +381,7 @@
             Controls.Add(btTurnOnOff);
             Controls.Add(menuStrip1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -449,6 +396,8 @@
             menuStrip1.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            panel7.ResumeLayout(false);
+            panel7.PerformLayout();
             panel6.ResumeLayout(false);
             panel6.PerformLayout();
             panel4.ResumeLayout(false);
@@ -459,8 +408,6 @@
             panel3.PerformLayout();
             panel5.ResumeLayout(false);
             panel5.PerformLayout();
-            panel7.ResumeLayout(false);
-            panel7.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -470,16 +417,6 @@
         private SanDisplay sanDisplay1;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem machineToolStripMenuItem;
-        private ToolStripMenuItem resolutionToolStripMenuItem;
-        private ToolStripMenuItem x200ToolStripMenuItem;
-        private ToolStripMenuItem x320ToolStripMenuItem;
-        private ToolStripMenuItem x400ToolStripMenuItem;
-        private ToolStripMenuItem x480ToolStripMenuItem;
-        private ToolStripMenuItem x600ToolStripMenuItem;
-        private ToolStripMenuItem x680ToolStripMenuItem;
-        private ToolStripMenuItem x600ToolStripMenuItem1;
-        private ToolStripMenuItem x720ToolStripMenuItem;
-        private ToolStripMenuItem x720ToolStripMenuItem1;
         private Panel panel1;
         private Panel panel2;
         private Panel panel3;
@@ -504,5 +441,7 @@
         private Panel panel7;
         private Panel panelIntr;
         private Label label7;
+        private ToolStripMenuItem newMachineToolStripMenuItem;
+        private ToolStripMenuItem editMachinesToolStripMenuItem;
     }
 }

@@ -63,7 +63,7 @@ _mos_start:
     syscall
 
     li $gp, 0    
-    jal .mos_kernel:start
+	jal .mos_kernel:start
 
     jal ._kernel_loop
 

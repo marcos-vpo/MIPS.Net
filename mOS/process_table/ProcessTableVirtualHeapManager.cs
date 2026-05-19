@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MIPS.Abi;
+﻿using MIPS.Abi;
 using mOS.k_objects;
 using mOS.memory;
 
@@ -86,8 +81,6 @@ namespace mOS.process_table
             }
 
         }
-
-
 
         public void Read(int virtualAddr, ref byte[] data)
         {

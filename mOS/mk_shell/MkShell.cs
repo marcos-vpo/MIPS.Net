@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MIPS.Abi;
 using mOS.IOKit.Devices;
 using mOS.IOKit.Structs;
 using mOS.kernel;
@@ -12,7 +13,7 @@ using mOS.process;
 
 namespace mOS.mk_shell
 {
-    public class MkShell
+    public class MkShell : ABIManaged
     {
         private IOConsoleService console;
         private string current_dir = "/";
@@ -41,7 +42,7 @@ namespace mOS.mk_shell
             console.PrintLine("Type a command:");
             console.Print("# ");
             console.Flush();
-
+             
             while (true)
             {
                 string command = console.ReadLine();
@@ -120,11 +121,15 @@ namespace mOS.mk_shell
                 sw.Stop();
                 console.PrintLine($"TYPE      LAST_WRITE             SIZE         NAME");
                 console.PrintLine($"+---------+----------------------+------------+-------------------");
+
+                StringBuilder sb = new StringBuilder();
                 foreach (Directory_Info di in dirs)
                 {
-                    console.PrintLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
+                    sb.AppendLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
+//                    console.PrintLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
                 }
 
+                console.PrintLine(sb.ToString());
                 console.PrintLine($"\n{dirs.Length} directories reached in ~{sw.ElapsedMilliseconds}ms");
                 console.PrintLine("\n");
 

@@ -56,7 +56,7 @@ namespace MIPS.Net.SoC
                     while (totalRemaining > 0)
                     {
                         int pageLeftSpace = MMU.RemainingPageSpace(virtualAddress);
-                        if(pageLeftSpace > (buffer.Length - totalRemaining))
+                        if(pageLeftSpace > totalRemaining)
                         {
                             pageLeftSpace = totalRemaining;
                         }

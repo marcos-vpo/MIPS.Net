@@ -9,8 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DotnetSubsystem\" />
-    <Folder Include="SoC\FFICPU\" />
+    <Compile Remove="DotnetSubsystem\**" />
+    <Compile Remove="SoC\FFICPU\**" />
+    <EmbeddedResource Remove="DotnetSubsystem\**" />
+    <EmbeddedResource Remove="SoC\FFICPU\**" />
+    <None Remove="DotnetSubsystem\**" />
+    <None Remove="SoC\FFICPU\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="SoC\GPU\" />
   </ItemGroup>
 

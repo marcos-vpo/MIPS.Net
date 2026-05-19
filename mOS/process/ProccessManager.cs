@@ -43,14 +43,19 @@ namespace mOS.process
                         Status = ProcessStatus.RUNING,
                         StatusTime = DateTime.Now.Ticks,
                         User = user,
-                        WorkingDirectory = path.Replace(pname, "")
+                        WorkingDirectory = path.Replace(pname, ""),
+                        PhysicalProgramAddr = 0
                     };
 
                     table.WriteObject(pe);
 
-                    int heapVirtualProgramAddr = process_heap.HeapAlloc(pId: pe.VirtualAddr, size: 64 + res.Data.Length, usage: PHeapUsage.CODE);
+                    AllocResult alloc = process_heap.HeapAlloc(pId: pe.VirtualAddr, size: 64 + res.Data.Length, usage: PHeapUsage.CODE);
+                    int heapVirtualProgramAddr = alloc.BaseVirtualAddr;
                     int programStartVirtualAddr = 64 + heapVirtualProgramAddr;
                     int physicalProgramAddr = process_heap.ResolveVirtualToPhysical(pId: pe.VirtualAddr, programStartVirtualAddr);
+
+                    pe.PhysicalProgramAddr = physicalProgramAddr;
+                    table.WriteObject(pe);
 
                     byte[] program_mex_asm = res.Data;
 
@@ -59,7 +64,7 @@ namespace mOS.process
                     // small data transfer channel with the kernel
 
                     process_heap.Write(pId: pe.VirtualAddr, virtualAddr: programStartVirtualAddr, ref program_mex_asm);
-
+                    //   process_heap.WriteObject();
 
                     // pre load program
                     syscall(v0: 520, a0: physicalProgramAddr);
@@ -122,6 +127,8 @@ namespace mOS.process
                     }
                 }
 
+                syscall(v0: 521, a0: pe.PhysicalProgramAddr, k0: true);
+
                 table.FreeObject(pe.VirtualAddr);
 
                 p_list.Remove(current_pId);
@@ -166,6 +173,51 @@ namespace mOS.process
             }
 
             return ps.ToArray();
+        }
+
+        internal int CurrentProcessAlloc(int size)
+        {
+            ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
+
+            AllocResult alloc = this.process_heap.HeapAlloc(current_pId, size, PHeapUsage.DATA);
+
+            byte[] b = new byte[64];
+
+            for (int i = 0; i < alloc.PhysicalPages.Length; i++)
+            {
+                byte[] physB = BitConverter.GetBytes(alloc.PhysicalPages[i]);
+                Array.Copy(physB, 0, b, (i * 4), 4);
+
+
+            }
+
+            process_heap.Write(current_pId, 0, ref b);
+
+            return alloc.BaseVirtualAddr;
+        }
+
+        internal int CurrentProcessVirtualStart()
+        {
+            var all_pages = process_heap.GetProcessPages(current_pId);
+            var first_data = all_pages.Where(p => p.Usage == PHeapUsage.DATA).FirstOrDefault();
+            if(first_data == null)
+            {
+                var last_code = all_pages.Where(p => p.Usage == PHeapUsage.CODE).LastOrDefault();
+                return (last_code.PageIndex-1) * 4096;
+            }
+
+            return (first_data.PageIndex - 1) * 4096;
+        }
+
+        internal int CurrentProcessAddr()
+        {
+           ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
+            return pe.PhysicalProgramAddr;
+        }
+
+        internal void CurrentProcessWrite(int addr, ref byte[] b)
+        {
+            process_heap.Write(current_pId, addr, ref b);
         }
     }
 }

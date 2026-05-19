@@ -4,14 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MIPS.Abi;
-using mOS.k_objects;
-using mOS.memory;
-using mOS.process_heap.ph_obj;
+using mOSLib.functions;
 
-namespace mOS.process_heap
+namespace mOSLib.heap
 {
     internal class ProcessVirtualHeapManager : ABIManaged
     {
+        private readonly sys sys;
+
+        public ProcessVirtualHeapManager(sys sys)
+        {
+            this.sys = sys;
+        }
 
         private List<ProcessHeapFragment> _fragments = new List<ProcessHeapFragment>();
         private List<ProcessHeapObject> _objects = new List<ProcessHeapObject>();
@@ -51,6 +55,8 @@ namespace mOS.process_heap
 
         public void WriteObj(int virtualAddr, mOSObject obj, byte[] objBin)
         {
+
+
             int objTupleLen = 12 + objBin.Length;
             byte[] objTuple = new byte[objTupleLen];
 
@@ -67,13 +73,13 @@ namespace mOS.process_heap
                 VirtualHeapAddr = virtualAddr,
                 Type = obj.mOSType,
                 Flags = 0,
-                HObjSize = objBin.Length,         
+                HObjSize = objBin.Length,
                 ContinuationAddr = -1,
             };
 
             _objects.Add(hpObj);
             _objects = _objects.OrderBy(o => o.VirtualHeapAddr).ToList();
-            
+
             /*
             impacto aqui: o heapfragment deve começar ao fim de onde está
             os bytes do programa mex
@@ -94,11 +100,11 @@ namespace mOS.process_heap
 
         }
 
-        public void Read(int virtualAddr, ref byte[] data)
+        private void Read(int virtualAddr, ref byte[] data)
         {
             const int PAGE_SIZE = 4096;
 
-            int pagesStartAddr = PhysicalPageManager.PAGES_START_ADDR;
+            int pagesStartAddr = 0;// GetPageStartAddr();
 
             if (virtualAddr < 0 || virtualAddr + data.Length > HeapLength)
                 throw new ArgumentOutOfRangeException(nameof(virtualAddr));
@@ -117,7 +123,7 @@ namespace mOS.process_heap
                     throw new InvalidOperationException($"Heap page {pageOrder} não mapeada");
 
                 int pagePhysicalAddr =
-                    pagesStartAddr + (page.PageIndex * PAGE_SIZE);
+                    pagesStartAddr + ((page.PageIndex -1) * PAGE_SIZE);
 
                 int bytesInThisPage =
                     Math.Min(remaining, PAGE_SIZE - offsetInPage);
@@ -126,7 +132,7 @@ namespace mOS.process_heap
                     pagePhysicalAddr + offsetInPage;
 
                 byte[] temp = new byte[bytesInThisPage];
-                m_read(physicalAddr, ref temp);
+                m_read(virtualAddr + written, ref temp);
 
                 Array.Copy(temp, 0, data, written, temp.Length);
 
@@ -135,11 +141,19 @@ namespace mOS.process_heap
             }
         }
 
-        public void Write(int virtualAddr, ref byte[] data)
+        private int page_start_addr = 0;
+        private int GetPageStartAddr()
+        {
+            if (page_start_addr == 0)
+                page_start_addr = sys.syscall(v0: call_codes.MEM_PAGE_START);
+            return page_start_addr;
+        }
+
+        private void Write(int virtualAddr, ref byte[] data)
         {
             const int PAGE_SIZE = 4096;
 
-            int pagesStartAddr = PhysicalPageManager.PAGES_START_ADDR;
+            int pagesStartAddr = 0;// GetPageStartAddr();
 
             if (virtualAddr < 0 || virtualAddr + data.Length > HeapLength)
                 throw new ArgumentOutOfRangeException(nameof(virtualAddr));
@@ -161,7 +175,7 @@ namespace mOS.process_heap
 
                 // 3️⃣ Endereço físico base da página
                 int pagePhysicalAddr =
-                    pagesStartAddr + (page.PageIndex * PAGE_SIZE);
+                    pagesStartAddr + ((page.PageIndex - 1) * PAGE_SIZE);
 
                 // 4️⃣ Quantos bytes cabem nesta página
                 int bytesInThisPage =
@@ -176,7 +190,7 @@ namespace mOS.process_heap
                 Array.Copy(data, written, slice, 0, bytesInThisPage);
 
                 // 7️⃣ Escrita via ABI
-                m_write(physicalAddr, ref slice);
+                m_write(virtualAddr + written, ref slice);
 
                 // 8️⃣ Avança
                 written += bytesInThisPage;
@@ -228,7 +242,7 @@ namespace mOS.process_heap
                 Write(currentAddr, ref free);
 
                 // remove da tabela de objetos
-        
+
                 if (ho != null)
                     _objects.Remove(ho);
 
@@ -265,7 +279,7 @@ namespace mOS.process_heap
 
             return totalFreed;
         }
-         
+
         internal int UpdateObj(mOSObject obj, byte[] objNewBin)
         {
             // 1️⃣ Localiza o objeto raiz
@@ -380,5 +394,66 @@ namespace mOS.process_heap
             return obj.VirtualAddr;
         }
 
+        private int pId = 0;
+        private int GetSelfPId()
+        {
+            if (pId == 0)
+                pId = sys.syscall(v0: 2);
+            return pId;
+        }
+
+        private int physProcessAddr = 0;
+
+
+        private List<ProcessHeapPage> _hpages = new List<ProcessHeapPage>();
+        // aloca uma nova página e grava no .space kernel_heap_map
+        // de acordo com o retorno de FindFreeEntryAddr
+        public int HeapAlloc(int size)
+        {
+            sys.syscall(v0: call_codes.MALLOC, a2: size);
+             
+            byte[] return_data = new byte[64];
+            m_read(0, ref return_data);
+
+            List<int> validPages = new List<int>();
+            for (int i = 0; i < return_data.Length; i += 4)
+            {
+                // Converte os 4 bytes atuais no número da página física correspondente
+                int page = BitConverter.ToInt32(return_data, i);
+
+                // REGRA CLÍNICA: Página 0 é inválida. Interrompe o fluxo imediatamente!
+                if (page == 0)
+                {
+                    break;
+                }
+
+                syscall(v0: 510, a0: physProcessAddr, a1: page);
+                validPages.Add(page);
+            }
+
+            // 3️⃣ Despeja o resultado final de volta no seu array original
+            int[] physical_pages = validPages.ToArray();
+
+            // pageAlloc.ProtectedAllocate(size, out physical_pages);
+            int pId = GetSelfPId();
+            foreach (int page in physical_pages)
+            {
+                int order = _pages.Count == 0 ? 0 : _pages.Max(e => e.Order) + 1;
+                ProcessHeapPage entry = new ProcessHeapPage(pId, order, page, PHeapUsage.DATA);
+
+                _pages.Add(entry);
+            }
+
+            UpdatePages(_pages);
+            return physical_pages.Length;
+        }
+
+        internal void _init()
+        {
+            physProcessAddr = sys.syscall(v0: call_codes.PROGRAM_ADDR);
+            pId = GetSelfPId();
+            HeapAlloc(4096);
+      
+        }
     }
 }

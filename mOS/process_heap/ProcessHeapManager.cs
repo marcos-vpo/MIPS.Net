@@ -22,10 +22,12 @@ namespace mOS.process_heap
         const int PAGE_SIZE = 4096;
 
         private readonly PageAllocator pageAlloc;
+   //     private readonly ProcessVirtualHeapManager virtualHeap;
         public ProcessHeapManager(int baseAddrMap, PageAllocator pa)
         {
             BASE_ADDR = baseAddrMap;
             pageAlloc = pa;
+    //        virtualHeap = new ProcessVirtualHeapManager();
 
             int hp_addr = BASE_ADDR;
             byte[] empty = new byte[8];
@@ -44,7 +46,7 @@ namespace mOS.process_heap
         // obter endereco dentro do .space kernel_heap_map
         // no multiplo de 8, que esteja disponivel para gravar
         // uma ENTRADA DE PAGINA no heap
-        private int FindFreeEntryAddr()
+        public int FindFreeEntryAddr()
         {
             byte[] tuple = new byte[TUPLE_LEN];
             int end = BASE_ADDR + HEAP_SIZE;
@@ -52,6 +54,7 @@ namespace mOS.process_heap
             {
                 m_read(addr, ref tuple);
                 int pId = BitConverter.ToInt32(tuple, 0);
+                //     if (pId == -1) continue;
                 int order = BitConverter.ToInt32(tuple, 4);
                 int pageIndex = BitConverter.ToInt32(tuple, 8);
                 int usage = BitConverter.ToInt32(tuple, 12);
@@ -66,8 +69,11 @@ namespace mOS.process_heap
         private List<ProcessHeapPage> _pages = new List<ProcessHeapPage>();
         // aloca uma nova página e grava no .space kernel_heap_map
         // de acordo com o retorno de FindFreeEntryAddr
-        public int HeapAlloc(int pId, int size, int usage)
+        public AllocResult HeapAlloc(int pId, int size, int usage)
         {
+      //      int virtualAddr = virtualHeap.FindFreeVirtualAddr(size);
+      //      if (virtualAddr > -1) return virtualAddr;
+
             int[] physical_pages = new int[0];
             pageAlloc.Allocate(size, out physical_pages);
 
@@ -102,7 +108,9 @@ namespace mOS.process_heap
                 _pages.Add(entry);
             }
 
-            return addrResult;
+       //     virtualHeap.UpdatePages(_pages);
+
+            return new AllocResult(addrResult, physical_pages);
         }
 
         internal void Detach(ProcessHeapPage proccess_page)
@@ -225,6 +233,7 @@ namespace mOS.process_heap
             int written = 0;
             int currentVirtualAddr = virtualAddr;
 
+
             while (remaining > 0)
             {
                 // 1️⃣ Página virtual atual
@@ -237,7 +246,7 @@ namespace mOS.process_heap
                     throw new InvalidOperationException($"Heap page {pageOrder} não mapeada");
 
                 pageAlloc.UpdateLastAccess(page.PageIndex);
-                
+
                 // 3️⃣ Endereço físico base da página
                 int pagePhysicalAddr =
                     pagesStartAddr + (page.PageIndex * PAGE_SIZE);
@@ -264,6 +273,78 @@ namespace mOS.process_heap
             }
         }
 
-       
+        /*
+        public int WriteObject(int pId, mOSObject obj)
+        {
+            obj.Set(obj);
+            byte[] objBin = obj.Serialize();
+            int objTupleLen = 12 + objBin.Length;
+
+            if (obj.VirtualAddr != -1) return virtualHeap.UpdateObj(obj, objBin);
+
+            int virtualAddr = virtualHeap.FindFreeVirtualAddr(objTupleLen);
+
+            if (virtualAddr == -1)
+            {
+                HeapAlloc(pId, objTupleLen, PHeapUsage.DATA);
+                virtualAddr = virtualHeap.FindFreeVirtualAddr(objTupleLen);
+                if (virtualAddr == -1)
+                    throw new Exception("Process-heap are full. TO-DO: correctly handle this! (future)");
+            }
+
+            virtualHeap.WriteObj(virtualAddr, obj, objBin);
+
+            obj.SetVirtualAddr(virtualAddr);
+
+            return virtualAddr;
+        }
+
+        internal T ReadObject<T>(int pId, int virtualHeapAddr) where T : mOSObject
+        {
+            const int HEADER_SIZE = 12;
+
+            if (virtualHeapAddr < 0)
+                return null;
+
+            List<byte> fullPayload = new List<byte>();
+
+            int currentAddr = virtualHeapAddr;
+            short flags = 0;
+
+            while (currentAddr != -1)
+            {
+                byte[] objHeader;
+                byte[] objRaw;
+
+                virtualHeap.ReadObject(currentAddr, out objHeader, out objRaw);
+
+                // objeto inexistente ou free
+                if (objRaw.Length == 0)
+                    return null;
+
+                // acumula payload
+                fullPayload.AddRange(objRaw);
+
+                // guarda flags do root
+                if (currentAddr == virtualHeapAddr)
+                    flags = BitConverter.ToInt16(objHeader[2..4]);
+
+                // próximo da cadeia
+                currentAddr = BitConverter.ToInt32(objHeader[4..8]);
+            }
+
+            // instancia o objeto lógico
+            Type t = typeof(T);
+            mOSObject obj = (mOSObject)Activator.CreateInstance(t);
+            obj.Set(obj);
+
+            obj.Desserialize(fullPayload.ToArray());
+
+            obj.SetVirtualAddr(virtualHeapAddr);
+            obj.SetFlags(flags);
+
+            return (T)obj;
+        }
+        */
     }
 }

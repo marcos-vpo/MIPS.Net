@@ -23,6 +23,7 @@
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	  <AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
 	  <Platforms>AnyCPU;x64</Platforms>
+	  <ApplicationIcon>cpu.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="cpu.ico" />
     <Content Include="firmware\FAST_VIDEO.asm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

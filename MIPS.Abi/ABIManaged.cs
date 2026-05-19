@@ -15,7 +15,6 @@ namespace MIPS.Abi
         protected int m_read(int address, ref byte[] data)
         {
             DMA.RequestData(address, ref data);
-
             return data.Length;
         }
 

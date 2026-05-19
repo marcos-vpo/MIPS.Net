@@ -210,7 +210,7 @@ _loop:
     jal ._loop
 # vincula uma rotina de tratamento em uma interrupção
 # da IVT.
-# será feita a busca da entrada na IVT pelo código da syscal
+# será feita a busca da entrada na IVT pelo código da syscall desejada, e
 # em seguida, será gravado na posição [4-8] da tupla, o endereço
 # da rotina de tratamento a ser invocada
 # parametros:

@@ -26,16 +26,16 @@
 		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\MIPS.SDK\mOSLib.csproj" />
-	</ItemGroup>
-
 	<Target Name="PostBuild_mShell" AfterTargets="Build">
 		<Exec Command="mpc -c &quot;$(ProjectDir)mShell.asm&quot; -d" WorkingDirectory="$(ProjectDir)" />
 
 		<Exec Command="move /Y &quot;$(ProjectDir)mShell.asm_full.mdbx&quot; &quot;C:\mOS\debug\mShell.asm_full.mdbx&quot;" />
 		<Exec Command="move /Y &quot;$(ProjectDir)mShell.mex&quot; &quot;C:\mOS\applications\mOSShell\mShell.mex&quot;" />
 	</Target>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\MIPS.SDK\mOSLib.csproj" />
+	</ItemGroup>
 
 
 </Project>

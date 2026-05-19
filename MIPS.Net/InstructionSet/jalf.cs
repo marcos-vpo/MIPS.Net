@@ -96,16 +96,16 @@ namespace MIPS.Net.InstructionSet
                         //      if (resVal is int)
                         //            MIPS_CPU.Instance.Registers[$"$v0"] = (int)resVal;
                     }
-
-                    Thread.Sleep(100);
+//
+                //    Thread.Sleep(100);
                     if (MIPS_CPU.Instance.IsInterrupted() == false)
                     {
                         while (MIPS_CPU.InLock())
                             Thread.Sleep(100);
 
-                  //      MIPS_CPU.RequestLock();
+                        MIPS_CPU.RequestLock();
                         MIPS_CPU.Instance.Registers[$"$pc"] = current_addr + 4;
-                   //     MIPS_CPU.Release();
+                        MIPS_CPU.Release();
                     }
                 }
                 catch (Exception ex)

@@ -2,6 +2,8 @@
 
 using MIPS.Net.IO;
 using MIPS.Net.SoC;
+using mOS.kernel;
+using mOS.mk_shell;
 using mOSLib.Debugger;
 
 namespace AbiTest

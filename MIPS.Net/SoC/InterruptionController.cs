@@ -65,7 +65,7 @@ namespace MIPS.Net.SoC
 
         public void CallInterruption(int code, Func<KeyValuePair<bool, byte[]>, int> callBack = null)
         {
-            if(code == 2)
+            if (code == 2)
             {
 
             }
@@ -83,6 +83,7 @@ namespace MIPS.Net.SoC
             else if (code == 500) HandleInitMMU(callBack);
             else if (code == 510) HandleAddTLBMMU(callBack);
             else if (code == 520) HandlePreLoadProgramCtx(callBack);
+            else if (code == 521) UnloadProgramCtx(callBack);
 
             else ExecuteFromInterruptionTable(code, callBack);
         }
@@ -102,13 +103,25 @@ namespace MIPS.Net.SoC
 
         }
 
+        private void UnloadProgramCtx(Func<KeyValuePair<bool, byte[]>, int> callBack)
+        {
+            int addr = _registers["$a0"]; 
+            byte[] pStart = new byte[1];
+            DMA.RequestData(addr, ref pStart);
+
+            if (pStart[0] == 0xD7)
+            {
+                MIPS_CPU.UnloadProgramCtx(addr);
+            }
+        }
+
         private void HandleAddTLBMMU(Func<KeyValuePair<bool, byte[]>, int> callBack)
         {
             int program_addr = _registers["$a0"];
             int phy_page = _registers["$a1"];
 
             ProgramContext? ctx = MIPS_CPU.GetProgram(program_addr);
-            if(ctx != null)
+            if (ctx != null)
             {
                 ctx.AddTLBEntry(phy_page);
             }
@@ -128,7 +141,7 @@ namespace MIPS.Net.SoC
         {
             int waitUpAddress = _registers["$a0"];
             MIPS_CPU.Instance.EnableFFI(waitUpAddress);
-      //      callBack(new KeyValuePair<bool, byte[]>(true, new byte[0]));
+            //      callBack(new KeyValuePair<bool, byte[]>(true, new byte[0]));
         }
 
         private void HandleStopDbg(Func<KeyValuePair<bool, byte[]>, int> callBack)
@@ -143,7 +156,7 @@ namespace MIPS.Net.SoC
             var entry = ints.FirstOrDefault(i => i.Code == code);
             if (entry != null)
                 _registers["$v0"] = entry.InterruptionAddress;
-            
+
             if (callBack != null) callBack(new KeyValuePair<bool, byte[]>(true, new byte[0]));
         }
 
@@ -164,7 +177,7 @@ namespace MIPS.Net.SoC
             var intFreeEntry = ints.FirstOrDefault(i => i.Code == 0);
             if (intFreeEntry != null)
                 _registers["$v0"] = intFreeEntry.InterruptionAddress;
-           
+
 
             if (callBack != null) callBack(new KeyValuePair<bool, byte[]>(true, new byte[0]));
         }
@@ -220,7 +233,7 @@ namespace MIPS.Net.SoC
             {
                 var ints = GetInterruptions().Length;
 
-                if(ints == 0)
+                if (ints == 0)
                 {
                     byte[] data = new byte[length];
                     DMA.RequestData(sourceAddr, ref data);
@@ -274,11 +287,19 @@ namespace MIPS.Net.SoC
             _registers[$"a1"] = intr.DeviceMemoryAddress;
 
             MIPS_CPU.Instance.SendInterruption(intr);
-          //  Task.Run(() => MIPS_CPU.Instance.SendInterruption(intr));
+            //  Task.Run(() => MIPS_CPU.Instance.SendInterruption(intr));
+
 
             bool sincExec = MIPS_CPU.Instance.Registers["$k0"] == 1;
+
+
+
+
             if (sincExec)
             {
+                while (intr.Ready == false)
+                    Thread.Sleep(10);
+
                 intr.WaitInterruptionExecution();
                 if (callBack != null)
                     callBack(new KeyValuePair<bool, byte[]>(true, new byte[0]));
@@ -287,7 +308,9 @@ namespace MIPS.Net.SoC
 
             Task.Run(() =>
             {
-         //       while (intr.IsProcessing) Thread.Sleep(100);
+                while (intr.Ready == false)
+                    Thread.Sleep(10);
+                //       while (intr.IsProcessing) Thread.Sleep(100);
                 intr.WaitInterruptionExecution(true);
 
                 if (callBack != null)

@@ -21,7 +21,8 @@ namespace NetPC
             InitializeComponent();
             this.firmwarePath = firmwarePath;
             this.motherBoard = motherBoard;
-            if (motherBoard != null) auto_play = true;
+
+            //if (motherBoard != null) auto_play = true;
 
             lbInstEnabled.Checked = true;
         }
@@ -113,7 +114,7 @@ namespace NetPC
                     });
                 });
 
-          
+
                 MaximizeBox = false;
 
                 btTurnOnOff.BackgroundImage = Resources.power_on;
@@ -143,17 +144,38 @@ namespace NetPC
         public void OnIOBus(int addr, byte[] data, bool write, bool read, bool interruptionSignal)
         {
             if (inst_enabled == false) return;
-            lock (lck)
+            lock (lck_io)
             {
                 Func<int> upd = new Func<int>(() =>
                 {
                     try
                     {
                         panel_io_interruption.Visible = interruptionSignal;
+                        short[] b32 = IOBUS.DataPins(); // 32x 1 ou 0
 
-                        Thread.Sleep(10);
+                        g_io.Clear(Color.SeaGreen);
+
+                        int largura = largura_io;
+                        int altura = altura_io;
+
+                        // CORREÇÃO: Para HORIZONTAL, o espaçamento agora divide a ALTURA
+                        float esp = altura / 32f;
+
+                        for (int i = 0; i < 32; i++)
+                        {
+                            // O índice 'i' agora calcula a posição Y (descendo no painel)
+                            float y = i * esp;
+                            if (b32[i] == 1)
+                            {
+                                // CORREÇÃO: Desenha da esquerda (X=0) até a direita (X=largura) mantendo o Y constante
+                                g_io.DrawLine(pen_io, 0, y, largura, y);
+                            }
+                        }
+
+                        panel_io.Invalidate();
 
                         panel_io_interruption.Visible = false;
+                        Thread.Sleep(10);
                     }
                     catch (Exception e)
                     {
@@ -175,11 +197,10 @@ namespace NetPC
 
                 if (inst_enabled == false) return;
 
-             
+
 
                 short[] b32 = MemoryBUS.DataPins(); // 32x 1 ou 0
 
-                var pnl = panel_mem;
                 g_mem.Clear(Color.SeaGreen);
 
                 int largura = largura_m;
@@ -195,10 +216,6 @@ namespace NetPC
                     {
                         g_mem.DrawLine(pen_lines, x, 0, x, altura);
                     }
-                    else
-                    {
-                        //      g_mem.DrawLine(p_off_line, x, 0, x, altura);
-                    }
                 }
 
                 if (InvokeRequired) BeginInvoke(() => panel_mem.Invalidate());
@@ -212,8 +229,13 @@ namespace NetPC
 
         Bitmap bmp_mem;
         Graphics g_mem;
-        Pen pen_lines;
 
+
+        Bitmap bmp_io;
+        Graphics g_io;
+
+        Pen pen_lines;
+        Pen pen_io;
 
 
         private void InitLines()
@@ -221,13 +243,22 @@ namespace NetPC
             if (altura_m > 0) return;
             this.DoubleBuffered = true;
             panel_mem.DoubleBuffered(true);
+            panel_io.DoubleBuffered(true);
 
             bmp_mem = new Bitmap(panel_mem.Width, panel_mem.Height);
             g_mem = Graphics.FromImage(bmp_mem);
+
+            bmp_io = new Bitmap(panel_io.Width, panel_io.Height);
+            g_io = Graphics.FromImage(bmp_io);
+
             pen_lines = new Pen(Color.Yellow, 2);
+            pen_io = new Pen(Color.Yellow, 2);
 
             largura_m = bmp_mem.Width;
             altura_m = bmp_mem.Height;
+
+            largura_io = bmp_io.Width;
+            altura_io = bmp_io.Height;
         }
 
         int largura_m = 0;
@@ -235,7 +266,7 @@ namespace NetPC
         int largura_io = 0;
         int altura_io = 0;
 
-        private bool inst_enabled = false;
+        private bool inst_enabled = true;
 
 
         private Pen p_off_line = new Pen(Brushes.DarkGray);
@@ -328,6 +359,7 @@ namespace NetPC
         }
 
         private static object lck = new object();
+        private static object lck_io = new object();
         private void Form1_Move(object sender, EventArgs e)
         {
             if (this.WindowState == FormWindowState.Minimized) return;
@@ -359,6 +391,14 @@ namespace NetPC
         }
 
 
+        private void panel_io_Paint(object sender, PaintEventArgs e)
+        {
+            if (inst_enabled == false) return;
+            if (bmp_io == null) return;
+            Graphics g = e.Graphics;
+            g.DrawImage(bmp_io, 0, 0);
+        }
+
 
         private void NetPCForm_Load(object sender, EventArgs e)
         {
@@ -386,12 +426,17 @@ namespace NetPC
         public void MIPS_OnClock(short clock_status, double frequency, int energyLevel)
         {
             if (!inst_enabled) return;
-            panelClock.Invoke(() =>
-            {
+            if (InvokeRequired)
+                panelClock.Invoke(() =>
+                {
+                    panelClock.BackColor = (clock_status == 0
+                        ? Color.Black
+                        : Color.Green);
+                });
+            else
                 panelClock.BackColor = (clock_status == 0
-                    ? Color.Black
-                    : Color.Green);
-            });
+                 ? Color.Black
+                 : Color.Green);
         }
 
 
@@ -401,7 +446,7 @@ namespace NetPC
         {
 
             DisplayController.INIT(port.DevicePort, sanDisplay1);
-        
+
         }
 
         public void TurnOffScreen(USBPort port)
@@ -559,5 +604,12 @@ namespace NetPC
         {
 
         }
+
+        private void newMachineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MachineConfigs mc = new MachineConfigs();
+            mc.ShowDialog();
+        }
+
     }
 }

@@ -155,9 +155,5 @@ namespace mOS.IOKit
             return IsBusy == false;
         }
 
-        internal void SetMode(object iDLE)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

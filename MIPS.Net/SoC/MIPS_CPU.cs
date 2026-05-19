@@ -59,8 +59,11 @@ namespace MIPS.Net.SoC
                 }
                 else
                 {
-                    Console.Write("END OF PROGRAM");
-                    _halted = true;
+                    if (in_lock == false)
+                    {
+                        Console.Write("END OF PROGRAM");
+                        _halted = true;
+                    }
                     return;
 
                 }
@@ -79,7 +82,11 @@ namespace MIPS.Net.SoC
 
         public static bool InLock() => Instance.in_lock;
 
-        public static void Release() => Instance.in_lock = false;
+        public static void Release()
+        {
+            Instance.lock_request = false;
+            Instance.in_lock = false;
+        }
 
         public void Process(byte[] instructions)
         {
@@ -87,50 +94,81 @@ namespace MIPS.Net.SoC
             while (in_lock)
             {
                 if (_halted) return;
-                Thread.Sleep(100);
+                Thread.Sleep(1);
             }
 
             lock_request = true;
 
-            while (!in_lock)
+            if (Registers["$k0"] == 1)
             {
-                if (_halted) return;
-                Thread.Sleep(100);
+                if (pendingInterruption != null)
+                {
+                    //        ProcessInstruction(new byte[4]);
+                    //    pendingInterruption.End();
+                    //   pendingInterruption = null;
+                    //    Registers["$k0"] = 0;
+                    //   _before_intr_program = Registers["$k1"];
+
+                }
             }
 
+            int lckWait = 0;
+            while (!in_lock)
+            {
+                if (lckWait == 50 || Registers["$k1"] > 0) break;
+                if (_halted) return;
+                Thread.Sleep(1);
+                lckWait += 1;
+            }
             int pos = 0;
             byte[] instruction_unit = new byte[4];
 
             //     Registers rBackup = new Registers();
             //    Registers.CopyTo(rBackup);
-            var pc = Registers["$pc"];
+            var pc = Registers["$k1"] == 0 ? Registers["$pc"] : Registers["$k1"];
             while (pos < instructions.Length)
             {
                 Array.Copy(instructions, pos, instruction_unit, 0, 4);
 
                 ProcessInstruction(instruction_unit);
-                Thread.Sleep(50);
+                //     Thread.Sleep(2);
                 int instruction = BitConverter.ToInt32(instruction_unit);
                 if (instruction == 31)
                 {
                     if (pendingInterruption != null)
                     {
-                        int syscall_pos = pendingInterruption.HandlerAddress;
-                        byte[] syscall_instr = new byte[4];
-
-                        DMA.RequestData(syscall_pos, ref syscall_instr, true);
-
-                        while (syscall_instr[0] != 0)
+                        if (Registers["k1"] > 0)
+                            ProcessInstruction(new byte[4]);
+                        else
                         {
-                            ProcessInstruction(syscall_instr);
-                            Thread.Sleep(50);
-                            syscall_pos += 4;
-                            DMA.RequestData(syscall_pos, ref syscall_instr, true);
-                        }
+                            int syscall_pos = pendingInterruption.HandlerAddress;
+                            byte[] syscall_instr = new byte[4];
 
-                        ProcessInstruction(syscall_instr); // end, exit interruption, restore state
-                        Thread.Sleep(50);                               //    pendingInterruption.End();
-                                                                        //   pendingInterruption = null;
+                            DMA.RequestData(syscall_pos, ref syscall_instr, true);
+
+                            while (syscall_instr.Sum(x => x) != 0)
+                            {
+                                ProcessInstruction(syscall_instr);
+                                //     Thread.Sleep(2);
+                                if(in_lock == false)
+                                {
+                                    if (Registers["k0"] == 1)
+                                        ProcessInstruction(new byte[4]);
+                                   return;
+                                }
+                                syscall_pos += 4;
+                                DMA.RequestData(syscall_pos, ref syscall_instr, true);
+                            }
+
+                            ProcessInstruction(syscall_instr); // end, exit interruption, restore state
+                        }                            //        Thread.Sleep(2);                               //    pendingInterruption.End();
+
+                        pendingInterruption = null;
+                    }
+                    else
+                    {
+                        if (Registers["k0"] == 1)
+                            ProcessInstruction(new byte[4]);
                     }
                     // syscall
                 }
@@ -138,7 +176,16 @@ namespace MIPS.Net.SoC
                 pos += 4;
             }
 
-            Registers[$"pc"] = pc;
+            //if (Registers["k1"] > 0)
+            //{
+            //    pc = Registers["k1"];
+            //    Registers["k1"] = 0;
+            //    _before_intr_program = 0;
+            //}
+
+            Registers["$pc"] = pc;
+            Registers["$k1"] = 0;
+            Registers["$k0"] = 0;
             //    rBackup.CopyTo(Registers);
             lock_request = false;
             in_lock = false;
@@ -204,8 +251,8 @@ namespace MIPS.Net.SoC
                     else if (clock_status == 1) clock_status = 0;
 
                     // enviar sinal de clock para a Motherboard
-                 //   if (Capture != null)
-                   //     try { Capture.MIPS_OnClock(clock_status, Frequency, ClockInterval); } catch { }
+                    //       if (Capture != null)
+                    //         try { Capture.MIPS_OnClock(clock_status, Frequency, ClockInterval); } catch { }
 
                     // há interrupções pendentes?
                     if (pendingInterruption != null)
@@ -221,6 +268,8 @@ namespace MIPS.Net.SoC
                             ProgramSwitch();
 
                             Registers[Registers.PC] = pendingInterruption.HandlerAddress;
+
+                            pendingInterruption.Ready = true;
                         }
                     }
 
@@ -359,17 +408,28 @@ namespace MIPS.Net.SoC
                 {
                     while (pendingInterruption.IsProcessing)
                     {
-                        Thread.Sleep(100);
-
-                        if (pendingInterruption == null)
+                        if (interruption.DeviceMemoryAddress > 0)
                         {
                             pendingInterruption = interruption;
+                            Registers["pc"] = interruption.HandlerAddress - 4;
+                            Release();
+                            _state_saved = false;
+
                             break;
                         }
+                        else
+                        {
+                            Thread.Sleep(100);
+
+                            if (pendingInterruption == null)
+                            {
+                                pendingInterruption = interruption;
+                                break;
+                            }
+                        }
+
+                        pendingInterruption = interruption;
                     }
-
-                    pendingInterruption = interruption;
-
                 }
             }
         }
@@ -485,6 +545,17 @@ namespace MIPS.Net.SoC
         internal static void AttatchPreloadedProgram(ProgramContext ctx)
         {
             Instance.programs.Add(ctx);
+        }
+
+        internal static void UnloadProgramCtx(int addr)
+        {
+            var program = GetProgram(addr);
+            if (program != null)
+            {
+                program.Unload();
+                Instance.programs.Remove(program);
+                program = null;
+            }
         }
     }
 }

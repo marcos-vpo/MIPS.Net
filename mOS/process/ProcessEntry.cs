@@ -26,7 +26,10 @@ namespace mOS.process
 
         // life-cycle
         [FieldOrder(6)]
-        public int MainAddr { get; set; }  
+        public int MainAddr { get; set; }
+        [FieldOrder(7)]
+        public int PhysicalProgramAddr { get; set; }
+
 
     }
 }

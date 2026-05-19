@@ -14,8 +14,8 @@ namespace vdim
         {
             Console.ForegroundColor = ConsoleColor.White;
 
-            if (args.Length == 0)
-                args = new string[] { "open", "C:\\Temp\\mips_disk.img" };
+            //  if (args.Length == 0)
+            //     args = new string[] { "open", "C:\\Temp\\mips_disk.img" };
 
             if (args.Length == 0)
                 PrintWelcome();
@@ -26,12 +26,19 @@ namespace vdim
         {
             try
             {
-                VCommand? cmd = GetCommand(args[0]);
+                List<string> cmdArgs = new List<string>();
+
+                if (args.Length == 0) cmdArgs = $"{Console.ReadLine()}".Split(' ').ToList();
+                else cmdArgs = args.ToList();
+
+                VCommand? cmd = GetCommand(cmdArgs[0]);
                 if (cmd == null) PrintWelcome();
                 else
                 {
-                    string[] parArgs = new string[args.Length - 1];
-                    Array.Copy(args, 1, parArgs, 0, parArgs.Length);
+                     
+
+                    string[] parArgs = new string[cmdArgs.Count - 1];
+                    Array.Copy(cmdArgs.ToArray(), 1, parArgs, 0, parArgs.Length);
 
                     cmd.Run(parArgs);
                 }
@@ -41,6 +48,8 @@ namespace vdim
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Command process fail: {ex.Message}");
                 Console.ForegroundColor = ConsoleColor.White;
+
+                ProcessArgs(new string[0]);
             }
         }
 
@@ -57,7 +66,7 @@ namespace vdim
                 case "clear": return new Clear();
                 case "cls": return new Clear();
                 case "import": return new Import();
-                case "export":  return new Export();
+                case "export": return new Export();
                 case "rm": return new Rm();
                 case "info": return new DiskInfo();
                 case "mv": return new Mv();

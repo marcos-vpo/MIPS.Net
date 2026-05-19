@@ -15,11 +15,7 @@ namespace MIPS.Net.InstructionSet
             int rt = (instruction >> 16) & 0x1F;
             int offset = instruction & 0xFFFF;
 
-            int address = registers[rs] + offset;
-            if(offset == 5)
-            {
-
-            }
+            int address = registers[rs] + offset; 
             byte val = (byte)registers[rt];
 
             MemoryBUS.SEND('W', address, new byte[1] { val }, (KeyValuePair<bool, byte[]> ret) =>

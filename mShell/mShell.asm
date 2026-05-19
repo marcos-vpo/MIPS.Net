@@ -7,9 +7,9 @@ _main:
    li $v0, 410
    la $a0, ._ffi_wait_up #  enable ffi
    syscall
-
+    
    jal .mOSShell:ShellMain
-   
+    
    li $v0, 1 # sys_exit
    syscall
 
