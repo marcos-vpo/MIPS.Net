@@ -1,15 +1,45 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<OutputPath>C:\mOS\bin</OutputPath>
+		<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+		<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MIPS.Abi\MIPS.Abi.csproj" />
-    <ProjectReference Include="..\NetPC\NetPC.csproj" />
-  </ItemGroup>
+		<!-- Remove criação da pasta Debug/Release -->
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+		<Nullable>enable</Nullable>
+		<Platforms>AnyCPU;x64</Platforms>
+		<AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+
+		<!-- Onde você realmente quer que os binários sejam gerados -->
+		<OutputPath>C:\mOS\bin</OutputPath>
+
+		<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+		<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+
+		<!-- Remove criação da pasta Debug/Release -->
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+		<!-- Remove criação da pasta com o nome do TargetFramework -->
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+		<!-- Remove criação da pasta da configuração (Debug/Release) -->
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+		<UseWindowsForms>True</UseWindowsForms>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<Platforms>AnyCPU;x64</Platforms>
+		<AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+
+
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MIPS.Abi\MIPS.Abi.csproj" />
+		<ProjectReference Include="..\NetPC\NetPC.csproj" />
+	</ItemGroup>
 
 </Project>

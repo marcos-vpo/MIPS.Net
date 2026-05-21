@@ -19,7 +19,7 @@ namespace mOS.process
     {
         private ProcessTableManager table;
         private ProcessHeapManager process_heap;
-        private int current_pId;
+        private int current_pId = -1;
 
         public ProccessManager(int process_table_map, int process_heap_map, PageAllocator page_alloc)
         {
@@ -175,7 +175,7 @@ namespace mOS.process
             return ps.ToArray();
         }
 
-        internal int CurrentProcessAlloc(int size)
+        internal AllocResult CurrentProcessAlloc(int size)
         {
             ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
 
@@ -188,36 +188,61 @@ namespace mOS.process
                 byte[] physB = BitConverter.GetBytes(alloc.PhysicalPages[i]);
                 Array.Copy(physB, 0, b, (i * 4), 4);
 
-
             }
 
             process_heap.Write(current_pId, 0, ref b);
 
-            return alloc.BaseVirtualAddr;
+            return alloc;
+        }
+
+        internal int CurrentProcessCodeSize()
+        {
+            var all_pages = process_heap.GetProcessPages(current_pId);
+            return all_pages.Count(p => p.Usage == PHeapUsage.CODE) * 4096;
         }
 
         internal int CurrentProcessVirtualStart()
         {
             var all_pages = process_heap.GetProcessPages(current_pId);
-            var first_data = all_pages.Where(p => p.Usage == PHeapUsage.DATA).FirstOrDefault();
-            if(first_data == null)
-            {
-                var last_code = all_pages.Where(p => p.Usage == PHeapUsage.CODE).LastOrDefault();
-                return (last_code.PageIndex-1) * 4096;
-            }
+            var count_all = all_pages.Count;
+            var code_pages = all_pages.Count(p => p.Usage == PHeapUsage.CODE);
+            var data_pages = all_pages.Count(p => p.Usage == PHeapUsage.DATA);
 
-            return (first_data.PageIndex - 1) * 4096;
+            var start = (count_all - code_pages) * 4096;
+
+            return start;
         }
 
         internal int CurrentProcessAddr()
         {
-           ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
+            ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
             return pe.PhysicalProgramAddr;
         }
 
         internal void CurrentProcessWrite(int addr, ref byte[] b)
         {
             process_heap.Write(current_pId, addr, ref b);
+        }
+
+        internal ProcessEntry GetCurrent()
+        {
+            ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
+            return pe;
+        }
+
+        internal void CurrentProcessFree(int physProgram, int physPage)
+        {
+            var pages = process_heap.GetProcessPages(current_pId);
+            var page = pages.FirstOrDefault(p => p.PageIndex == physPage);
+            if (page != null)
+            {
+                process_heap.Free(page);
+            }
+        }
+
+        internal void CurrentProgramPause()
+        {
+            current_pId = -1;
         }
     }
 }

@@ -32,6 +32,13 @@ namespace MIPS.Net.SoC.__program
             tlb_entries.Add(new TLBEntry(page: physical_page_index));
         }
 
+        internal void RemTLBEntry(int phy_page)
+        {
+            TLBEntry? e = tlb_entries.FirstOrDefault(t => t.PhysicalPage == phy_page);
+            if (e != null)
+                tlb_entries.Remove(e);
+        }
+
         public void AttatchTracing(DebuggerTracingObject dto)
         {
             foreach (TracingRotule rtl in dto.Rotules)
@@ -221,5 +228,7 @@ namespace MIPS.Net.SoC.__program
         {
             FFIWaitUpAddr = waitUpAddress;
         }
+
+       
     }
 }

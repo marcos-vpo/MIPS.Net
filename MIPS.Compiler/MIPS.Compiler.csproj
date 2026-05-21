@@ -1,21 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>mpc</AssemblyName>
-    <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0-windows7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>mpc</AssemblyName>
+		<Platforms>AnyCPU;x64</Platforms>
 
-  <ItemGroup>
-    <Compile Remove="Test.cs" />
-  </ItemGroup>
+		<!-- Onde você realmente quer que os binários sejam gerados -->
+		<OutputPath>C:\mOS\bin</OutputPath>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MIPS.Abi\MIPS.Abi.csproj" />
-    <ProjectReference Include="..\MIPS.Net\MIPS.Net.csproj" />
-  </ItemGroup>
+		<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+		<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+
+		<!-- Remove criação da pasta Debug/Release -->
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+		<!-- Remove criação da pasta com o nome do TargetFramework -->
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+		<!-- Remove criação da pasta da configuração (Debug/Release) -->
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+		<UseWindowsForms>True</UseWindowsForms>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<Platforms>AnyCPU;x64</Platforms>
+		<AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Test.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MIPS.Abi\MIPS.Abi.csproj" />
+		<ProjectReference Include="..\MIPS.Net\MIPS.Net.csproj" />
+	</ItemGroup>
 
 </Project>

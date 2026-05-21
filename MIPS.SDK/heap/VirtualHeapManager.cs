@@ -8,20 +8,20 @@ using mOSLib.functions;
 
 namespace mOSLib.heap
 {
-    internal class ProcessVirtualHeapManager : ABIManaged
+    internal class VirtualHeapManager : ABIManaged
     {
         private readonly sys sys;
 
-        public ProcessVirtualHeapManager(sys sys)
+        public VirtualHeapManager(sys sys)
         {
             this.sys = sys;
         }
 
-        private List<ProcessHeapFragment> _fragments = new List<ProcessHeapFragment>();
-        private List<ProcessHeapObject> _objects = new List<ProcessHeapObject>();
-        private List<ProcessHeapPage> _pages = new List<ProcessHeapPage>();
+        private List<VirtualHeapFragment> _fragments = new List<VirtualHeapFragment>();
+        private List<VirtualHeapObject> _objects = new List<VirtualHeapObject>();
+        private List<VirtualHeapPage> _pages = new List<VirtualHeapPage>();
 
-        public void UpdatePages(List<ProcessHeapPage> toUpdate)
+        public void UpdatePages(List<VirtualHeapPage> toUpdate)
         {
             _pages = toUpdate.OrderBy(p => p.Order).ToList();
             int newHeapLen = _pages.Count * 4096;
@@ -29,7 +29,7 @@ namespace mOSLib.heap
             if (newHeapLen > HeapLength)
             {
                 int hl = (newHeapLen - HeapLength);
-                _fragments.Add(new ProcessHeapFragment(HeapLength, hl));
+                _fragments.Add(new VirtualHeapFragment(HeapLength, hl));
                 _fragments = _fragments.OrderBy(f => f.VirtualHeapStart).ToList();
             }
 
@@ -68,7 +68,7 @@ namespace mOSLib.heap
 
             Write(virtualAddr, ref objTuple);
 
-            ProcessHeapObject hpObj = new ProcessHeapObject
+            VirtualHeapObject hpObj = new VirtualHeapObject
             {
                 VirtualHeapAddr = virtualAddr,
                 Type = obj.mOSType,
@@ -86,7 +86,7 @@ namespace mOSLib.heap
             */
 
 
-            ProcessHeapFragment? fg = _fragments.FirstOrDefault(f => f.VirtualHeapStart == virtualAddr);
+            VirtualHeapFragment? fg = _fragments.FirstOrDefault(f => f.VirtualHeapStart == virtualAddr);
             if (fg != null)
             {
                 var fragSize = fg.Length;
@@ -103,11 +103,12 @@ namespace mOSLib.heap
         private void Read(int virtualAddr, ref byte[] data)
         {
             const int PAGE_SIZE = 4096;
-
-            int pagesStartAddr = 0;// GetPageStartAddr();
+            Array.Clear(data);
+            int pagesStartAddr = GetPageStartAddr();
 
             if (virtualAddr < 0 || virtualAddr + data.Length > HeapLength)
-                throw new ArgumentOutOfRangeException(nameof(virtualAddr));
+                return;
+
 
             int remaining = data.Length;
             int written = 0;
@@ -118,12 +119,12 @@ namespace mOSLib.heap
                 int pageOrder = currentVirtualAddr / PAGE_SIZE;
                 int offsetInPage = currentVirtualAddr % PAGE_SIZE;
 
-                ProcessHeapPage page = _pages.FirstOrDefault(p => p.Order == pageOrder);
+                VirtualHeapPage page = _pages.FirstOrDefault(p => p.Order == pageOrder);
                 if (page == null)
                     throw new InvalidOperationException($"Heap page {pageOrder} não mapeada");
 
                 int pagePhysicalAddr =
-                    pagesStartAddr + ((page.PageIndex -1) * PAGE_SIZE);
+                    pagesStartAddr + ((page.VirtualPage - 1) * PAGE_SIZE);
 
                 int bytesInThisPage =
                     Math.Min(remaining, PAGE_SIZE - offsetInPage);
@@ -132,7 +133,7 @@ namespace mOSLib.heap
                     pagePhysicalAddr + offsetInPage;
 
                 byte[] temp = new byte[bytesInThisPage];
-                m_read(virtualAddr + written, ref temp);
+                m_read(physicalAddr + written, ref temp);
 
                 Array.Copy(temp, 0, data, written, temp.Length);
 
@@ -146,14 +147,14 @@ namespace mOSLib.heap
         {
             if (page_start_addr == 0)
                 page_start_addr = sys.syscall(v0: call_codes.MEM_PAGE_START);
-            return page_start_addr;
+            return sys.syscall(v0: call_codes.MEM_PAGE_START);
         }
 
         private void Write(int virtualAddr, ref byte[] data)
         {
             const int PAGE_SIZE = 4096;
 
-            int pagesStartAddr = 0;// GetPageStartAddr();
+            int pagesStartAddr = GetPageStartAddr();
 
             if (virtualAddr < 0 || virtualAddr + data.Length > HeapLength)
                 throw new ArgumentOutOfRangeException(nameof(virtualAddr));
@@ -169,13 +170,13 @@ namespace mOSLib.heap
                 int offsetInPage = currentVirtualAddr % PAGE_SIZE;
 
                 // 2️⃣ Página mapeada
-                ProcessHeapPage page = _pages.FirstOrDefault(p => p.Order == pageOrder);
+                VirtualHeapPage page = _pages.FirstOrDefault(p => p.Order == pageOrder);
                 if (page == null)
                     throw new InvalidOperationException($"Heap page {pageOrder} não mapeada");
 
                 // 3️⃣ Endereço físico base da página
                 int pagePhysicalAddr =
-                    pagesStartAddr + ((page.PageIndex - 1) * PAGE_SIZE);
+                    pagesStartAddr + ((page.VirtualPage - 1) * PAGE_SIZE);
 
                 // 4️⃣ Quantos bytes cabem nesta página
                 int bytesInThisPage =
@@ -190,7 +191,7 @@ namespace mOSLib.heap
                 Array.Copy(data, written, slice, 0, bytesInThisPage);
 
                 // 7️⃣ Escrita via ABI
-                m_write(virtualAddr + written, ref slice);
+                m_write(physicalAddr + written, ref slice);
 
                 // 8️⃣ Avança
                 written += bytesInThisPage;
@@ -221,54 +222,52 @@ namespace mOSLib.heap
             int totalFreed = 0;
             int currentAddr = virtualHeapAddr;
 
+            // 1️⃣ Transforma a cadeia de objetos em fragmentos livres e zera a memória
             while (currentAddr != -1)
             {
-                // lê header do nó atual
                 Read(currentAddr, ref vh_obj_header);
 
                 int len = BitConverter.ToInt32(vh_obj_header[8..12]);
-                if (len <= 0)
-                    break; // já free ou corrupção
+                if (len <= 0) break;
 
                 int continuationAddr = BitConverter.ToInt32(vh_obj_header[4..8]);
                 int blockSize = 12 + len;
 
-                ProcessHeapObject? ho =
-                    _objects.FirstOrDefault(o => o.VirtualHeapAddr == currentAddr);
+                VirtualHeapObject? ho = _objects.FirstOrDefault(o => o.VirtualHeapAddr == currentAddr);
+                int payloadSize = ho != null ? ho.HObjSize : len;
 
-
-                // zera memória do bloco
-                byte[] free = new byte[12 + ho.HObjSize];
+                byte[] free = new byte[12 + payloadSize];
                 Write(currentAddr, ref free);
 
-                // remove da tabela de objetos
+                if (ho != null) _objects.Remove(ho);
 
-                if (ho != null)
-                    _objects.Remove(ho);
-
-                // cria fragmento
-                _fragments.Add(new ProcessHeapFragment(currentAddr, free.Length));
-
+                _fragments.Add(new VirtualHeapFragment(currentAddr, free.Length));
                 totalFreed += blockSize;
-
-                // avança na cadeia
                 currentAddr = continuationAddr;
             }
 
-            // ordena fragmentos
-            _fragments = _fragments
-                .OrderBy(f => f.VirtualHeapStart)
-                .ToList();
+            // 2️⃣ Consolida a tabela de fragmentos (Funde os vizinhos contíguos)
+            ConsolidateFragments();
 
-            // unifica fragmentos contíguos
+            // 3️⃣ Decommit de Páginas: Analisa o Heap e devolve páginas vazias ao Kernel (Exceto a Página 0)
+            ReleaseEmptyPages(ref totalFreed);
+
+            return totalFreed;
+        }
+
+        private void ConsolidateFragments()
+        {
+            _fragments = _fragments.OrderBy(f => f.VirtualHeapStart).ToList();
+
             for (int i = 0; i < _fragments.Count - 1;)
             {
-                ProcessHeapFragment current = _fragments[i];
-                ProcessHeapFragment next = _fragments[i + 1];
+                VirtualHeapFragment current = _fragments[i];
+                VirtualHeapFragment next = _fragments[i + 1];
 
                 if (current.VirtualHeapStart + current.Length == next.VirtualHeapStart)
                 {
-                    current.Length += next.Length;
+                    if (current.VirtualHeapStart > 0)
+                        current.Length += next.Length;
                     _fragments.RemoveAt(i + 1);
                 }
                 else
@@ -276,20 +275,97 @@ namespace mOSLib.heap
                     i++;
                 }
             }
+        }
 
-            return totalFreed;
+        private void ReleaseEmptyPages(ref int totalFreed)
+        {
+            const int PAGE_SIZE = 4096;
+            List<VirtualHeapPage> pagesToRelease = new List<VirtualHeapPage>();
+
+            // 1️⃣ Descobre quais páginas (ignorando a página 0) estão totalmente livres
+            // Uma página está livre se existe um fragmento que cobre todo o seu intervalo virtual
+            foreach (var page in _pages)
+            {
+                if (page.Order == 0) continue; // 🚨 PROTEÇÃO CLÍNICA: Página zero nunca morre
+
+                int pageStart = page.Order * PAGE_SIZE;
+                int pageEnd = pageStart + PAGE_SIZE;
+
+                // Procura um fragmento consolidado que engula totalmente esta página
+                bool pageIsEmpty = _fragments.Any(f => pageStart >= f.VirtualHeapStart && (f.VirtualHeapStart + f.Length) <= pageEnd);
+
+                if (pageIsEmpty)
+                {
+                    pagesToRelease.Add(page);
+                }
+            }
+
+            if (pagesToRelease.Count == 0) return;
+
+            // 2️⃣ Avisa o Kernel e limpa a tabela de páginas do processo
+            foreach (var page in pagesToRelease)
+            {
+                sys.syscall(v0: call_codes.FREE, a2: physProcessAddr, a3: page.PhysicalPage);
+                Thread.Sleep(50);
+                sys.syscall(v0: call_codes.REM_MMU_TLB, a0: physProcessAddr, a1: page.PhysicalPage);
+
+                _pages.Remove(page);
+                totalFreed += 4096;
+            }
+
+            // 3️⃣ RECONSTRUÇÃO PURA DOS FRAGMENTOS
+            // Em vez de fazer remendos matemáticos complexos em rebarbas, nós geramos a nova lista
+            // de fragmentos livres subtraindo os espaços das páginas que acabaram de ser devolvidas ao Kernel.
+            List<VirtualHeapFragment> newFragments = new List<VirtualHeapFragment>();
+
+            foreach (var frag in _fragments)
+            {
+                int fragStart = frag.VirtualHeapStart;
+                int fragEnd = frag.VirtualHeapStart + frag.Length;
+
+                int currentStart = fragStart;
+
+                // Passa cortando os pedaços que pertenciam às páginas liberadas
+                foreach (var page in pagesToRelease.OrderBy(p => p.Order))
+                {
+                    int pageStart = page.Order * PAGE_SIZE;
+                    int pageEnd = pageStart + PAGE_SIZE;
+
+                    // Se a página intersecta o fragmento atual
+                    if (pageStart >= currentStart && pageStart < fragEnd)
+                    {
+                        // Se sobrou um pedaço antes da página começar, guarda como fragmento válido
+                        if (pageStart > currentStart)
+                        {
+                            newFragments.Add(new VirtualHeapFragment(currentStart, pageStart - currentStart));
+                        }
+                        currentStart = pageEnd; // Avança o ponteiro de análise para depois da página limpa
+                    }
+                }
+
+                // Se sobrou alguma rebarba depois da última página limpa, adiciona
+                if (currentStart < fragEnd)
+                {
+                    newFragments.Add(new VirtualHeapFragment(currentStart, fragEnd - currentStart));
+                }
+            }
+
+            _fragments = newFragments;
+
+            // 4️⃣ Sincroniza o tamanho do Heap e a ordem interna das páginas restantes
+            UpdatePages(_pages);
         }
 
         internal int UpdateObj(mOSObject obj, byte[] objNewBin)
         {
             // 1️⃣ Localiza o objeto raiz
-            ProcessHeapObject? root = _objects.FirstOrDefault(o => o.VirtualHeapAddr == obj.VirtualAddr);
+            VirtualHeapObject? root = _objects.FirstOrDefault(o => o.VirtualHeapAddr == obj.VirtualAddr);
             if (root == null)
                 return 0;
 
             // 2️⃣ Coleta todas as partes (root + continuations)
-            List<ProcessHeapObject> parts = new List<ProcessHeapObject>();
-            ProcessHeapObject current = root;
+            List<VirtualHeapObject> parts = new List<VirtualHeapObject>();
+            VirtualHeapObject current = root;
             parts.Add(current);
 
             while (current.ContinuationAddr != -1)
@@ -344,7 +420,7 @@ namespace mOSLib.heap
                     throw new Exception("Out of virtual heap memory");
 
                 // cria ProcessObject da continuação
-                ProcessHeapObject newPart = new ProcessHeapObject
+                VirtualHeapObject newPart = new VirtualHeapObject
                 {
                     VirtualHeapAddr = continuationAddr,
                     Type = obj.mOSType,
@@ -366,7 +442,7 @@ namespace mOSLib.heap
                 Write(continuationAddr + 12, ref remainingData);
 
                 // encadeia no ÚLTIMO bloco existente
-                ProcessHeapObject last = parts.Last();
+                VirtualHeapObject last = parts.Last();
                 last.ContinuationAddr = continuationAddr;
 
                 byte[] contPtr = BitConverter.GetBytes(continuationAddr);
@@ -375,7 +451,7 @@ namespace mOSLib.heap
                 _objects.Add(newPart);
 
 
-                ProcessHeapFragment? fg = _fragments.FirstOrDefault(f => f.VirtualHeapStart == last.ContinuationAddr);
+                VirtualHeapFragment? fg = _fragments.FirstOrDefault(f => f.VirtualHeapStart == last.ContinuationAddr);
                 if (fg != null)
                 {
                     var fragSize = fg.Length;
@@ -394,24 +470,25 @@ namespace mOSLib.heap
             return obj.VirtualAddr;
         }
 
-        private int pId = 0;
-        private int GetSelfPId()
+        private int pId = -1;
+        internal int GetSelfPId()
         {
-            if (pId == 0)
+            if (pId == -1)
                 pId = sys.syscall(v0: 2);
             return pId;
         }
 
-        private int physProcessAddr = 0;
+        private int physProcessAddr { get; set; }
 
 
-        private List<ProcessHeapPage> _hpages = new List<ProcessHeapPage>();
+        private List<VirtualHeapPage> _hpages = new List<VirtualHeapPage>();
         // aloca uma nova página e grava no .space kernel_heap_map
         // de acordo com o retorno de FindFreeEntryAddr
         public int HeapAlloc(int size)
         {
+            int ret = HeapLength;
             sys.syscall(v0: call_codes.MALLOC, a2: size);
-             
+
             byte[] return_data = new byte[64];
             m_read(0, ref return_data);
 
@@ -427,7 +504,6 @@ namespace mOSLib.heap
                     break;
                 }
 
-                syscall(v0: 510, a0: physProcessAddr, a1: page);
                 validPages.Add(page);
             }
 
@@ -436,16 +512,26 @@ namespace mOSLib.heap
 
             // pageAlloc.ProtectedAllocate(size, out physical_pages);
             int pId = GetSelfPId();
-            foreach (int page in physical_pages)
+            int virtualPages_Indx = _pages.Count + 1;
+
+            foreach (int physicalPage in physical_pages)
             {
                 int order = _pages.Count == 0 ? 0 : _pages.Max(e => e.Order) + 1;
-                ProcessHeapPage entry = new ProcessHeapPage(pId, order, page, PHeapUsage.DATA);
+                VirtualHeapPage entry = new VirtualHeapPage(
+                    processId: pId,
+                    virtualOrder: order,
+                    virtualPageIndex: virtualPages_Indx,
+                    physicalPage: physicalPage,
+                    PHeapUsage.DATA);
+
+                syscall(v0: call_codes.ADD_MMU_TLB, a0: physProcessAddr, a1: physicalPage);
 
                 _pages.Add(entry);
+                virtualPages_Indx += 1;
             }
 
             UpdatePages(_pages);
-            return physical_pages.Length;
+            return ret;
         }
 
         internal void _init()
@@ -453,7 +539,45 @@ namespace mOSLib.heap
             physProcessAddr = sys.syscall(v0: call_codes.PROGRAM_ADDR);
             pId = GetSelfPId();
             HeapAlloc(4096);
-      
+
+        }
+
+        internal void attatch_pages(int[] physical_pages)
+        {
+            // pageAlloc.ProtectedAllocate(size, out physical_pages);
+            int pId = GetSelfPId();
+            int virtualPages_Indx = _pages.Count + 1;
+
+            foreach (int physicalPage in physical_pages)
+            {
+                int order = _pages.Count == 0 ? 0 : _pages.Max(e => e.Order) + 1;
+                VirtualHeapPage entry = new VirtualHeapPage(
+                    processId: pId,
+                    virtualOrder: order,
+                    virtualPageIndex: virtualPages_Indx,
+                    physicalPage: physicalPage,
+                    PHeapUsage.DATA);
+
+                syscall(v0: call_codes.ADD_MMU_TLB, a0: physProcessAddr, a1: physicalPage);
+
+                _pages.Add(entry);
+                virtualPages_Indx += 1;
+            }
+
+            UpdatePages(_pages);
+        }
+
+        internal void attatch_object(mOSObject obj)
+        {
+            if (_objects.Any(o => o.VirtualHeapAddr == obj.VirtualAddr) == false)
+                _objects.Add(new VirtualHeapObject()
+                {
+                    VirtualHeapAddr = obj.VirtualAddr,
+                    HObjSize = obj.Serialize().Length,
+                    Flags = obj.Flags,
+                    Type = obj.mOSType,
+                    ContinuationAddr = -1
+                });
         }
     }
 }

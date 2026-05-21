@@ -2,7 +2,7 @@
 
 namespace mOSLib.heap
 {
-    internal class ProcessHeapObject
+    internal class VirtualHeapObject
     {
         public int VirtualHeapAddr { get; set; }
         // [ 2 + 2 + 4 + 4 + N... ] = 

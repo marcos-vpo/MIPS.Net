@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using mOSLib.heap;
+﻿
+using mOS.k_objects;
+using mOS.misc;
 
-namespace mOSLib.types
+namespace mOS.types
 {
-    public class mString : mOSObject
+    internal class mString : mOSObject
     {
         [FieldOrder(0)]
         public string Value { get; set; }

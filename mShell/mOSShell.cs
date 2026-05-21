@@ -2,21 +2,26 @@
 using MIPS.Abi;
 using mOSLib;
 using mOSLib.functions;
-using mOSLib.types; 
+using mOSLib.types;
 namespace mShell
 {
-    public class mOSShell  
+    public class mOSShell
     {
-        private  libmOS lib;
-     
+        private libmOS lib;
+
         [Extern]
-        public void ShellMain()
+        public int ShellMain()
         {
-            if(lib == null)  lib = libmOS.init();
+            if (lib == null) lib = libmOS.init();
 
-            char ch = lib.console_readchar();
+            //    mString line = lib.console_readline();
 
-            return;
+            //     lib.mem_free(line);
+
+            int addr = lib.mem_alloc(50000);
+
+
+            int freed = lib.mem_free(addr);
             mString str = new mString("Teste 123");
             lib.mem_write(str);
 
@@ -28,10 +33,19 @@ namespace mShell
             strLeituraStr2.Value = "Uma outra string muito maior que a primeira em termos de.";
 
 
-            lib.mem_write(strLeituraStr2); 
-         
+            lib.mem_write(strLeituraStr2);
+
+            mString novaRefLine = lib.mem_read<mString>(addr: 4096);
+
+            return lib.process_pause();
         }
 
+        [Extern]
+        public int OnResume()
+        {
 
+
+            return 0;
+        }
     }
 }

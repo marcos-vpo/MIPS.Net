@@ -77,31 +77,7 @@ namespace mOS.kernel
             ppm._INIT(start_mem_addr);
 
         }
-
-        public void init_interrupts()
-        {
-
-            // ✔️ inicializar controlador
-            // ✔️ limpar tabela
-            // ✔️ definir handler default
-
-            /*
-            IOService? svc = IORegistry.GetService(IODeviceClass.STORAGE);
-
-            svc.Open(IODeviceOperation.READ, IODeviceMode.UNUSED);
-
-            int rounds = 0;
-            for (int i = 0; i < 1000; i++)
-            {
-                svc.PrepareBuffer(Encoding.UTF8.GetBytes("/boot/hello.txt"));
-                svc.Fire();
-
-                IOResult? res = svc.Result();
-                Thread.Sleep(10);
-                rounds += 1;
-            }
-            */
-        }
+         
 
         public void init_devices()
         {

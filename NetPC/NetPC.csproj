@@ -7,23 +7,24 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>True</UseWPF>
-	  <!-- Onde você realmente quer que os binários sejam gerados -->
-	  <OutputPath>C:\mOS\bin</OutputPath>
+	<!-- Onde você realmente quer que os binários sejam gerados -->
+	<OutputPath>C:\mOS\bin</OutputPath>
 
-	  <!-- Evita que o BaseOutputPath seja combinado com subpastas -->
-	  <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+	<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+	<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
 
-	  <!-- Remove criação da pasta Debug/Release -->
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+	<!-- Remove criação da pasta Debug/Release -->
+	<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
 
-	  <!-- Remove criação da pasta com o nome do TargetFramework -->
-	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<!-- Remove criação da pasta com o nome do TargetFramework -->
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
-	  <!-- Remove criação da pasta da configuração (Debug/Release) -->
-	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-	  <AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
-	  <Platforms>AnyCPU;x64</Platforms>
-	  <ApplicationIcon>cpu.ico</ApplicationIcon>
+	<!-- Remove criação da pasta da configuração (Debug/Release) -->
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+	<Platforms>AnyCPU;x64</Platforms>
+	  <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+	<ApplicationIcon>cpu.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

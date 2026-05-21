@@ -1,10 +1,10 @@
 ﻿ 
 namespace mOSLib.heap
 {
-    internal class ProcessHeapFragment
+    internal class VirtualHeapFragment
     {
 
-        public ProcessHeapFragment(int virtualHeapAddr, int length)
+        public VirtualHeapFragment(int virtualHeapAddr, int length)
         {
             VirtualHeapStart = virtualHeapAddr;
             Length = length;

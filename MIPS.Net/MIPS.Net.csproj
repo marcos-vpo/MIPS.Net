@@ -1,24 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Platforms>AnyCPU;x64</Platforms>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<!-- Onde você realmente quer que os binários sejam gerados -->
+		<OutputPath>C:\mOS\bin</OutputPath>
 
-  <ItemGroup>
-    <Compile Remove="DotnetSubsystem\**" />
-    <Compile Remove="SoC\FFICPU\**" />
-    <EmbeddedResource Remove="DotnetSubsystem\**" />
-    <EmbeddedResource Remove="SoC\FFICPU\**" />
-    <None Remove="DotnetSubsystem\**" />
-    <None Remove="SoC\FFICPU\**" />
-  </ItemGroup>
+		<!-- Evita que o BaseOutputPath seja combinado com subpastas -->
+		<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
 
-  <ItemGroup>
-    <Folder Include="SoC\GPU\" />
-  </ItemGroup>
+		<!-- Remove criação da pasta Debug/Release -->
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+
+		<!-- Remove criação da pasta com o nome do TargetFramework -->
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+		<!-- Remove criação da pasta da configuração (Debug/Release) -->
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+		<UseWindowsForms>True</UseWindowsForms>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<Platforms>AnyCPU;x64</Platforms>
+		<AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="DotnetSubsystem\**" />
+		<Compile Remove="SoC\FFICPU\**" />
+		<EmbeddedResource Remove="DotnetSubsystem\**" />
+		<EmbeddedResource Remove="SoC\FFICPU\**" />
+		<None Remove="DotnetSubsystem\**" />
+		<None Remove="SoC\FFICPU\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="SoC\GPU\" />
+	</ItemGroup>
 
 </Project>

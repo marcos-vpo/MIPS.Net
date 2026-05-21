@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using mOSLib.functions;
 using mOSLib.heap;
+using mOSLib.types;
 
 namespace mOSLib
 {
@@ -29,7 +30,7 @@ namespace mOSLib
             mem = new mem(sys);
             file = new mfile();
             process = new process(sys);
-            console = new console(sys);
+            console = new console(sys, mem);
 
             thread = new thread();
             time = new time();
@@ -57,6 +58,7 @@ namespace mOSLib
 
         public int mem_alloc(int size) => mem.alloc(size);
         public int mem_free(int addr) => mem.free(addr);
+        public int mem_free(mOSObject o) => mem.free(o.VirtualAddr);
         public int mem_realloc() => mem.realloc();
         public int mem_set(int addr, byte b, int size) => mem.memset(addr, b, size);
         public int mem_cpy(int destAddr, int srcAddr, int count) => mem.memcpy(destAddr, srcAddr, count);
@@ -75,6 +77,7 @@ namespace mOSLib
         public int process_wait() => process.wait();
         public int process_kill() => process.kill();
         public int process_exit() => process.exit();
+        public int process_pause() => process.pause();
         public int process_getpid() => process.getpid();
 
 
@@ -94,5 +97,7 @@ namespace mOSLib
         public int time_uptime() => time.uptime();
 
         public char console_readchar() => console.read_char();
+
+        public mString console_readline() => console.read_line();
     }
 }

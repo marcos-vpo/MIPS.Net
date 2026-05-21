@@ -97,7 +97,7 @@ namespace mOS.mk_shell
 
             foreach (ProcessInfo p in procs)
             {
-                console.PrintLine($"PID: {p.pId} | Name: {p.ProcessName} | User: {p.User} | Mem: {p.memUsage} bytes ");
+                console.PrintLine($"PID: {p.pId.ToString().PadRight(4, ' ')} | Name: {p.ProcessName} | User: {p.User.PadRight(10, ' ')} | Mem: {p.memUsage} bytes ");
             }
         }
 

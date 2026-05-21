@@ -17,13 +17,10 @@ namespace MIPS.Net.InstructionSet
 
             bool avoidSaveState = registers[$"k1"] == 1;
 
-           if (avoidSaveState == false)
+            if (avoidSaveState == false)
                 registers[Registers.RA] = registers[Registers.PC];              // Salva o endereço da próxima instrução em $ra (PC + 4)
-          //  else
-            {
 
-            }
-                var rotule = MIPS_CPU.CurrentProgram.GetRotuleByRelativeAddr(target);
+            var rotule = MIPS_CPU.CurrentProgram.GetRotuleByRelativeAddr(target);
             if (rotule == null)
                 MIPS_CPU.Instance.RequestHalt();
             else
@@ -31,8 +28,8 @@ namespace MIPS.Net.InstructionSet
             {
                 registers[Registers.PC] = rotule.AbsoluteAddr - 4;
 
-               // if (avoidSaveState == false)
-                    MIPS_CPU.Instance.DBG?.ProgramSwitching(MIPS_CPU.CurrentProgram, registers[Registers.PC] + 8);
+                // if (avoidSaveState == false)
+                MIPS_CPU.Instance.DBG?.ProgramSwitching(MIPS_CPU.CurrentProgram, registers[Registers.PC] + 8);
             }
         }
 

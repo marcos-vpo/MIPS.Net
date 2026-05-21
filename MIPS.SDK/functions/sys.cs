@@ -45,6 +45,15 @@ namespace mOSLib.functions
  
         public  int yield() { return 0; }
         public  int uptime() { return 0; }
-         
+
+        internal void syscall(object v0, bool k0)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal int syscall(object v0)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

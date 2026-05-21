@@ -7,33 +7,33 @@ namespace mOSLib.functions
     internal class mem
     {
         private sys sys;
-        private ProcessVirtualHeapManager virtualHeap = null;
+        private VirtualHeapManager virtualHeap = null;
 
         public mem(sys sys)
         {
             this.sys = sys;
-            virtualHeap = new ProcessVirtualHeapManager(this.sys);
+            virtualHeap = new VirtualHeapManager(this.sys);
             virtualHeap._init();
         }
-        public  int alloc(int size)
+        public int alloc(int size)
         {
-            return sys.syscall(v0: 3, a2: size);
+            return virtualHeap.HeapAlloc(size); //sys.syscall(v0: call_codes.MALLOC, a2: size);
         }
 
-        public  int free(int virtualHeapAddr)
+        public int free(int virtualHeapAddr)
         {
             return virtualHeap.FreeObj(virtualHeapAddr);
         }
 
-        public  int realloc() { return 0; }
-        public  int memset(int addr, byte b, int size) { return 0; }
-        public  int memcpy(int destAddr, int srcAddr, int count) { return 0; }
-        public  int memcmp(int addr1, int addr2, int count) { return 0; }
+        public int realloc() { return 0; }
+        public int memset(int addr, byte b, int size) { return 0; }
+        public int memcpy(int destAddr, int srcAddr, int count) { return 0; }
+        public int memcmp(int addr1, int addr2, int count) { return 0; }
 
-        private  int pagesStartAddr = 0;
-        private  int total_heap_size = 0;
+        private int pagesStartAddr = 0;
+        private int total_heap_size = 0;
 
-        public  int write(mOSObject obj)
+        public int write(mOSObject obj)
         {
             obj.Set(obj);
             byte[] objBin = obj.Serialize();
@@ -58,7 +58,7 @@ namespace mOSLib.functions
             return virtualAddr;
         }
 
-        public  T read<T>(int virtualHeapAddr) where T : mOSObject
+        public T read<T>(int virtualHeapAddr) where T : mOSObject
         {
             const int HEADER_SIZE = 12;
 
@@ -102,8 +102,17 @@ namespace mOSLib.functions
             obj.SetVirtualAddr(virtualHeapAddr);
             obj.SetFlags(flags);
 
+            virtualHeap.attatch_object(obj);
+
             return (T)obj;
         }
 
+        internal void attatch(List<int> validPages)
+        {
+            // 3️⃣ Despeja o resultado final de volta no seu array original
+            int[] physical_pages = validPages.ToArray();
+
+            virtualHeap.attatch_pages(physical_pages);
+        }
     }
 }

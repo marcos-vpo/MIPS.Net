@@ -39,7 +39,7 @@ namespace MIPS.Net.SoC
                 {
                     if (Registers[$"k1"] == 0)
                     {
-                 
+
 
                         if (lock_bypass == false)
                         {
@@ -51,19 +51,23 @@ namespace MIPS.Net.SoC
                         {
                             pendingInterruption = previous_intr;
                             _before_intr_program = previous_before_addr;
+                            /*
+                             * comentei isso aqui agora pouco
 
                             CurrentProgram = programs.FirstOrDefault(p => p.Address == _before_intr_program);
                             if (CurrentProgram == null)
                                 throw new Exception($"CRITICAL: restore state of program in address '{_before_intr_program}' fail");
-                      //      CurrentProgram.RestoreSavedSate(Registers);
-
+                       
+                    //        if (CurrentProgram.IsMMUEnabled)
+                  //              MMU.SetTLB(CurrentProgram.tlb_entries);
+                       //     CurrentProgram.RestoreSavedSate(Registers);
                             Registers["$pc"] = previous_intr_pc;
+                            */
 
-                            previous_intr = null;
                             previous_intr_pc = 0;
                             previous_before_addr = 0;
-
                             lock_bypass = false;
+                            previous_intr = null;
                         }
 
                     }
@@ -164,6 +168,8 @@ namespace MIPS.Net.SoC
                             ProcessInstruction(new byte[4]);
                         else
                         {
+                            while (pendingInterruption.Ready == false)
+                                Thread.Sleep(50);
                             int syscall_pos = pendingInterruption.HandlerAddress;
                             byte[] syscall_instr = new byte[4];
 
@@ -176,6 +182,7 @@ namespace MIPS.Net.SoC
                                 while (previous_intr != null)
                                     Thread.Sleep(10);
 
+                                Thread.Sleep(20);
                                 syscall_pos += 4;
                                 DMA.RequestData(syscall_pos, ref syscall_instr, true);
                             }
@@ -267,8 +274,8 @@ namespace MIPS.Net.SoC
                         break;
                     }
 
-                    if (clock_status == 0) clock_status = 1;
-                    else if (clock_status == 1) clock_status = 0;
+                    //    if (clock_status == 0) clock_status = 1;
+                    //   else if (clock_status == 1) clock_status = 0;
 
                     // enviar sinal de clock para a Motherboard
                     //       if (Capture != null)
@@ -280,25 +287,23 @@ namespace MIPS.Net.SoC
                         // DBG?.Step(1);
                         if (_state_saved == false)
                         {
+
                             SaveState();
 
+                            if (pendingInterruption != null)
+                            {
+                                CurrentProgram = programs.FirstOrDefault(p => p.Rotules.Any(r => r.AbsoluteAddr == pendingInterruption.HandlerAddress));
+                                Registers[Registers.PC] = pendingInterruption.HandlerAddress - 4;
+                                ProgramSwitch();
 
-                            CurrentProgram = programs.FirstOrDefault(p => p.Rotules.Any(r => r.AbsoluteAddr == pendingInterruption.HandlerAddress));
-                            Registers[Registers.PC] = pendingInterruption.HandlerAddress - 4;
-                            ProgramSwitch();
+                                Registers[Registers.PC] = pendingInterruption.HandlerAddress;
 
-                            Registers[Registers.PC] = pendingInterruption.HandlerAddress;
-
-                            pendingInterruption.Ready = true;
+                                pendingInterruption.Ready = true;
+                            }
                         }
                     }
 
-                    if (DBG != null)
-                    {
-                        if (DBG.State == DebuggerState.PAUSED) continue;
-                    }
-
-
+                    if (DBG?.State == DebuggerState.PAUSED) continue;
 
                     if (in_lock && lock_bypass == false)
                         continue;
@@ -312,67 +317,21 @@ namespace MIPS.Net.SoC
                     // endereço instrução atual
                     int addr = Registers[Registers.PC];
 
-                    Func<byte[], int> exec_instruction = new Func<byte[], int>((res) =>
-                    {
-                        if (addr != Registers[Registers.PC])
-                            return 0;
 
-                        if ((res == null) || (res.Length == 0))
-                        {
-                            DBG?.StateUpdate(CurrentProgram, 0, Registers, MotherBoard.Instance.Memory);
-                            RequestHalt();
-                            return 0;
-                        }
-                        byte[] instruction_unit = res;
-                        if (instruction_unit[0] == 0xD7) // program starting, not loaded...
-                        {
-                            ProgramContext? pg = programs.FirstOrDefault(p => p.Address == addr);
-                            if (pg == null) pg = new ProgramContext();
-                            if (pg.Loaded == false)
-                            {
-                                if (pg.IsMMUEnabled)
-                                    Instance.Registers[$"pc"] = 0;
-                                pg.Load(addr);
-                                programs.Add(pg);
-                                CurrentProgram = pg;
-                                CurrentProgram.Calling_RA = Registers[Registers.RA];
-
-                                RotuleMapping? rtle = pg.GetRotuleByRelativeAddr(0);
-                                if (rtle != null) Registers[Registers.PC] = rtle.AbsoluteAddr;
-                                else Registers[Registers.PC] = pg.Rotules[0].AbsoluteAddr;
-
-                                addr = Registers[Registers.PC];
-
-                                DBG?.ProgramSwitching(pg, pc: addr);
-
-                                MemoryBUS.SEND('R', addr, new byte[4], (KeyValuePair<bool, byte[]> res2) =>
-                                {
-                                    instruction_unit = res2.Value;
-                                    ProcessInstruction(instruction_unit);
-                                    if (!_halted) Registers[Registers.PC] += 4;
-                                    StepOnDebug(instruction_unit);
-                                    return 0;
-                                });
-                            }
-                        }
-                        else
-                        {
-                            ProcessInstruction(instruction_unit);
-                            if (!_halted) Registers[Registers.PC] += 4;
-                            StepOnDebug(instruction_unit);
-                        }
-
-                        return 0;
-                    });
 
                     byte[]? cached = L1.GetInstruction(addr);
                     if (cached != null)
                     {
-                        exec_instruction(cached);
+                        exec_instruction(addr, cached);
                         //     MemoryBUS.State(addr, cached);
                     }
                     else
                     {
+
+                        DMA.RequestData(addr, ref instruction_byte);
+                        L1.StoreInstruction(addr, instruction_byte);
+                        exec_instruction(addr, instruction_byte);
+                        /*
                         // fetch instruction
                         MemoryBUS.SEND('R', addr, instruction_byte, (KeyValuePair<bool, byte[]> res) =>
                         {
@@ -380,13 +339,67 @@ namespace MIPS.Net.SoC
                             exec_instruction(res.Value);
                             return 0;
                         });
+                        */
                     }
 
                     ///   D
-                    if (ClockInterval > 0)
-                        Thread.Sleep(ClockInterval);
+                    //         if (ClockInterval > 0)
+                    //           Thread.Sleep(ClockInterval);
                 }
             });
+        }
+
+        private void exec_instruction(int addr, byte[] res)
+        {
+            //      if (addr != Registers[Registers.PC])
+            //         return;
+
+            if ((res == null) || (res.Length == 0))
+            {
+                DBG?.StateUpdate(CurrentProgram, 0, Registers, MotherBoard.Instance.Memory);
+                RequestHalt();
+                return;
+            }
+            byte[] instruction_unit = res;
+            if (instruction_unit[0] == 0xD7) // program starting, not loaded...
+            {
+                ProgramContext? pg = programs.FirstOrDefault(p => p.Address == addr);
+                if (pg == null) pg = new ProgramContext();
+                if (pg.Loaded == false)
+                {
+                    if (pg.IsMMUEnabled)
+                        Instance.Registers[$"pc"] = 0;
+                    pg.Load(addr);
+                    programs.Add(pg);
+                    CurrentProgram = pg;
+                    CurrentProgram.Calling_RA = Registers[Registers.RA];
+
+                    RotuleMapping? rtle = pg.GetRotuleByRelativeAddr(0);
+                    if (rtle != null) Registers[Registers.PC] = rtle.AbsoluteAddr;
+                    else Registers[Registers.PC] = pg.Rotules[0].AbsoluteAddr;
+
+                    addr = Registers[Registers.PC];
+
+                    DBG?.ProgramSwitching(pg, pc: addr);
+
+                    MemoryBUS.SEND('R', addr, new byte[4], (KeyValuePair<bool, byte[]> res2) =>
+                    {
+                        instruction_unit = res2.Value;
+                        ProcessInstruction(instruction_unit);
+                        if (!_halted) Registers[Registers.PC] += 4;
+                        StepOnDebug(instruction_unit);
+                        return 0;
+                    });
+                }
+            }
+            else
+            {
+                ProcessInstruction(instruction_unit);
+                if (!_halted) Registers[Registers.PC] += 4;
+                StepOnDebug(instruction_unit);
+            }
+
+            return;
         }
 
         public static void BUS_NOTIFICATION(bool enabled)
@@ -434,9 +447,9 @@ namespace MIPS.Net.SoC
                     {
 
                         previous_intr = pendingInterruption;
-                        previous_intr_pc = Registers["$pc"] + 4;
+                        previous_intr_pc = Registers["$pc"];
                         previous_before_addr = _before_intr_program;
-                        _before_intr_program = interruption.HandlerAddress;
+                        _before_intr_program = CurrentProgram.Address;
 
                         pendingInterruption = interruption;
                         CurrentProgram = programs.FirstOrDefault(p => p.Rotules.Any(r => r.AbsoluteAddr == pendingInterruption.HandlerAddress));

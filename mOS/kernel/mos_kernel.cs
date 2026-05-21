@@ -38,7 +38,6 @@ namespace mOS.kernel
             k_init k_init = new k_init();
             k_init.init_memory(phys_page_manager);
             k_init.init_devices();
-            k_init.init_interrupts();
 
 
             kernel_heap_manager = new KernelHeapManager(k_init.kernel_heap_map, page_allocator);

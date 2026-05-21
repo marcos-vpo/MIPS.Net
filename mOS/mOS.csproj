@@ -24,6 +24,7 @@
 	  <UseWindowsForms>True</UseWindowsForms>
 	  <AssemblyVersion>0.0.1</AssemblyVersion>
 	  <Platforms>AnyCPU;x64</Platforms>
+	  <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

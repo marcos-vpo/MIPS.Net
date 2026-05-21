@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using MIPS.Abi;
 using mOS.kernel;
 using mOS.memory;
+using mOS.process;
+using mOS.process_heap.ph_obj;
 
 namespace mOS.syscalls
 {
@@ -23,8 +25,21 @@ namespace mOS.syscalls
         public int process_alloc(int a2)
         {
             int size = a2;
-            int vAddr = mos_kernel.ProcessManager.CurrentProcessAlloc(size);
-            return vAddr;
+            AllocResult vAddr = mos_kernel.ProcessManager.CurrentProcessAlloc(size);
+            return vAddr.BaseVirtualAddr;
+        }
+
+        [Extern]
+        public int process_free(int a2, int a3)
+        {
+            int physProgram = a2;
+            int physPage = a3;
+
+            ProccessManager pm = mos_kernel.ProcessManager;
+
+            pm.CurrentProcessFree(physProgram, physPage);
+
+            return 1;
         }
     }
 }

@@ -19,6 +19,12 @@ namespace mOS.syscalls
         }
 
         [Extern]
+        public void p_pause()
+        {
+            mos_kernel.ProcessManager.CurrentProgramPause();
+        }
+
+        [Extern]
         public void mk_shell()
         {
             MkShell m = new MkShell();

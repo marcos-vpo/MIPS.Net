@@ -82,6 +82,7 @@ namespace MIPS.Net.SoC
             else if (code == 410) HandleEnableFFI(callBack);
             else if (code == 500) HandleInitMMU(callBack);
             else if (code == 510) HandleAddTLBMMU(callBack);
+            else if (code == 511) HandleRemoveTLBMMU(callBack);
             else if (code == 520) HandlePreLoadProgramCtx(callBack);
             else if (code == 521) UnloadProgramCtx(callBack);
 
@@ -124,6 +125,18 @@ namespace MIPS.Net.SoC
             if (ctx != null)
             {
                 ctx.AddTLBEntry(phy_page);
+            }
+        }
+
+        private void HandleRemoveTLBMMU(Func<KeyValuePair<bool, byte[]>, int> callBack)
+        {
+            int program_addr = _registers["$a0"];
+            int phy_page = _registers["$a1"];
+
+            ProgramContext? ctx = MIPS_CPU.GetProgram(program_addr);
+            if (ctx != null)
+            {
+                ctx.RemTLBEntry(phy_page);
             }
         }
 

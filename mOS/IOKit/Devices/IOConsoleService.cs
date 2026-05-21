@@ -23,7 +23,7 @@ namespace mOS.IOKit.Devices
 
         }
 
-        public string ReadLine()
+        public string ReadLine(bool print = true)
         {
             StringBuilder sb = new StringBuilder();
             byte keyCode = 0x0;
@@ -41,9 +41,11 @@ namespace mOS.IOKit.Devices
                 else
                 {
                     sb.Append((char)key.KeyCode);
-                    display.PrintChar((char)key.KeyCode);
-          //          Thread.Sleep(1);
-                    display.SendFlush();
+                    if (print)
+                    {
+                        display.PrintChar((char)key.KeyCode);
+                        display.SendFlush();
+                    }
                 }
             }
 

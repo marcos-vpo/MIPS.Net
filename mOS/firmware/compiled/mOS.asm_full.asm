@@ -173,6 +173,10 @@ _configure_syscalls:
     li $a0, 4
     la $a1, ._mem_page_start
     jal ._configure_code
+	# proc_free
+	li $a0, 8
+    la $a1, ._mem_proc_free
+    jal ._configure_code
 	# proc_addr
     li $a0, 9
     la $a1, ._sys_get_proc_addr
@@ -180,6 +184,14 @@ _configure_syscalls:
 	# read_char
     li $a0, 11
     la $a1, ._console_read_char
+    jal ._configure_code
+	# read_line
+    li $a0, 12
+    la $a1, ._console_read_line
+    jal ._configure_code
+	# proc_pause
+    li $a0, 99
+    la $a1, ._sys_program_pause
     jal ._configure_code
     move $ra, $s1
     jr $ra
@@ -195,6 +207,11 @@ _configure_code:
     jr $ra
 _console_read_char:
 	jal .console:read_char
+_console_read_line:
+	jal .console:read_line
+_sys_program_pause:
+	la $k1, ._kernel_loop
+    jal .sys:p_pause
 _sys_program_exit:
 	la $k1, ._kernel_loop
     jal .sys:p_exit
@@ -204,5 +221,7 @@ _sys_get_pid:
     jal .sys:p_get_current_pid
 _mem_proc_alloc:
     jal .mem:process_alloc
+_mem_proc_free:
+    jal .mem:process_free
 _mem_page_start:
     jal .mem:page_start_addr
