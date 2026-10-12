@@ -82,7 +82,7 @@ namespace mOSLib
 
 
         public int sys_call(int v0, int? a0 = null, int? a1 = null, int? a2 = null, int? a3 = null, bool k0 = true, int k1 = 0)
-            => sys.syscall(v0, a0, a1, a2, a3, k0, k1);
+            => sys.syscall(v0, a0, a1, a2, a3, k0: k0, k1: k1);
         public int sys_yeld() => sys.yield();
         public int uptime() => sys.uptime();
 
@@ -97,6 +97,8 @@ namespace mOSLib
         public int time_uptime() => time.uptime();
 
         public char console_readchar() => console.read_char();
+
+        public int console_write_line(mString line) => console.write_line(line);
 
         public mString console_readline() => console.read_line();
     }

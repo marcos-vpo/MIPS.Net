@@ -61,22 +61,22 @@ namespace mOS.IOKit.Devices
 
             if (key.KeyCode == (int)Keys.Enter)
             {
-                display.SetCursor(0, display.CursorY + 1);
+                display.SetCursor(0, IODisplayService.CursorY + 1);
             }
 
             if (key.KeyCode == (int)Keys.Back)
             {
-                if (display.CursorX == 0)
+                if (IODisplayService.CursorX == 0)
                 {
-                    display.SetCursor(display.Columns, display.CursorY - 1);
+                    display.SetCursor(display.Columns, IODisplayService.CursorY - 1);
                     display.PrintChar(' ');
-                    display.SetCursor(display.Columns, display.CursorY - 1);
+                    display.SetCursor(display.Columns, IODisplayService.CursorY - 1);
                 }
                 else
                 {
-                    display.SetCursor(display.CursorX - 1, display.CursorY);
+                    display.SetCursor(IODisplayService.CursorX - 1, IODisplayService.CursorY);
                     display.PrintChar(' ');
-                    display.SetCursor(display.CursorX - 1, display.CursorY);
+                    display.SetCursor(IODisplayService.CursorX - 1, IODisplayService.CursorY);
                 }
             }
 

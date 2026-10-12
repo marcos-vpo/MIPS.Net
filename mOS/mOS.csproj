@@ -27,6 +27,10 @@
 	  <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
   </PropertyGroup>
 
+	<Target Name="PostBuild_mOS" AfterTargets="Build">
+		<Exec Command="make.bat" WorkingDirectory="$(ProjectDir)\firmware" />
+	</Target>
+	
   <ItemGroup>
     <Folder Include="boot\" />
     <Folder Include="docs\" />

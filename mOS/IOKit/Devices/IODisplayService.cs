@@ -15,8 +15,8 @@ namespace mOS.IOKit.Devices
         private static int resolution_x;
         private static int resolution_y;
 
-        public int CursorX { get; private set; }
-        public int CursorY { get; private set; }
+        public static int CursorX { get; private set; }
+        public static int CursorY { get; private set; }
 
         public int Columns => resolution_x;
         public int Rows => resolution_y;
@@ -53,8 +53,8 @@ namespace mOS.IOKit.Devices
                 io_service.Open(IODeviceOperation.WRITE, IODisplayCommand.TEXT_PRINT_CHAR);
             }
 
-            CursorX = 0;
-            CursorY = 0;
+       //     CursorX = 0;
+         //   CursorY = 0;
 
             if (RequiredBufferSize > io_service.BufferLength())
             {

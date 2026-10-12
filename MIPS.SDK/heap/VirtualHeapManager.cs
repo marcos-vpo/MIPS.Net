@@ -67,6 +67,7 @@ namespace mOSLib.heap
             Array.Copy(objBin, 0, objTuple, 12, objBin.Length);
 
             Write(virtualAddr, ref objTuple);
+            obj.Length = objBin.Length;
 
             VirtualHeapObject hpObj = new VirtualHeapObject
             {

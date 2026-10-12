@@ -17,6 +17,7 @@
         public int VirtualAddr { get; private set; }
         public short Flags { get; private set; }
         public short mOSType { get; }
+        public int Length { get; internal set; }
 
         private mOSObjectSerializer _serializer;
 

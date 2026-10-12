@@ -6,7 +6,7 @@
       usb_02_addr:    .word 1010010       # 10000 + 10 + 1_000_000
       usb_02_buffer:  .word 1000000
       usb_03_addr:    .word 2020020       # usb_02 + 10 + 1_000_000
-      usb_03_buffer:  .word 1000000
+      usb_03_buffer:  .word 10
       usb_04_addr:    .word 3030030       # usb_03 + 10 + 1_000_000
       usb_04_buffer:  .word 1000000
       kernel_file:    .asciiz "/boot/mOS.mex"

@@ -11,6 +11,34 @@ namespace mOS.syscalls
     public class console : ABIManaged
     {
         [Extern]
+        public int write_line(int a0, int a1, int a2, int a3, int t0)
+        {
+            using (IOConsoleService cs = new IOConsoleService())
+            {
+
+                var pm = mos_kernel.ProcessManager;
+                ProcessEntry pe = pm.GetCurrent();
+                 
+                int current_p_code_size = pm.CurrentProcessCodeSize();
+                int pvs = pm.CurrentProcessVirtualStart();
+                int baseVirtualHeapAddr = pvs + a2;
+                int objHeader = 12;
+                baseVirtualHeapAddr += objHeader;
+
+                mString str = new mString();
+                   
+                byte[] b = new byte[t0];
+                pm.CurrentProcessRead(baseVirtualHeapAddr, ref b);
+
+                str.Desserialize(b);
+
+                cs.PrintLine(str.Value);
+
+                return 0;
+            }
+        }
+
+        [Extern]
         public int read_char()
         {
             using (IOConsoleService cs = new IOConsoleService())
@@ -29,7 +57,7 @@ namespace mOS.syscalls
         {
             using (IOConsoleService cs = new IOConsoleService())
             {
-                var str = cs.ReadLine(print: false);
+                var str = cs.ReadLine(print: true);
 
                 var pm = mos_kernel.ProcessManager;
                 ProcessEntry pe = pm.GetCurrent();
@@ -50,7 +78,7 @@ namespace mOS.syscalls
                 Array.Copy(BitConverter.GetBytes(-1), 0, objTuple, 4, 4);      // continuation (virtual)
                 Array.Copy(BitConverter.GetBytes(objBin.Length), 0, objTuple, 8, 4); // payload size
                 Array.Copy(objBin, 0, objTuple, 12, objBin.Length);
-                 
+
 
                 pm.CurrentProcessWrite(alloc.BaseVirtualAddr, ref objTuple);
 
@@ -60,13 +88,13 @@ namespace mOS.syscalls
                 Array.Copy(BitConverter.GetBytes(baseVirtualHeapAddr), 0, response, 4, 4);
 
                 int posResp = 8;
-                for(int i =  0; i < alloc.PhysicalPages.Length; i++)
+                for (int i = 0; i < alloc.PhysicalPages.Length; i++)
                 {
                     int page = alloc.PhysicalPages[i];
                     Array.Copy(BitConverter.GetBytes(page), 0, response, posResp, 4);
                     posResp += 4;
                 }
-                 
+
                 mos_kernel.ProcessManager.CurrentProcessWrite(0, ref response);
 
                 return 0;

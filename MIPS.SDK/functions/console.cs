@@ -20,7 +20,7 @@ namespace mOSLib.functions
 
         public char read_char()
         {
-            sys.syscall(v0: call_codes.READ_CHAR, k0: false);
+            sys.syscall(v0: call_codes.CONSOLE_READ_CHAR, k0: false);
             byte[] b = new byte[1];
             m_read(0, ref b);
             return (char)b[0];
@@ -28,7 +28,7 @@ namespace mOSLib.functions
 
         public mString read_line()
         {
-            sys.syscall(v0: call_codes.READ_LINE, k0: false);
+            sys.syscall(v0: call_codes.CONSOLE_READ_LINE, k0: false);
 
             byte[] return_buffer = new byte[64];
             m_read(0, ref return_buffer);
@@ -54,6 +54,20 @@ namespace mOSLib.functions
               
             mString mstr = mem.read<mString>(start_addr); 
             return mstr;
+        }
+
+        public int write_line(mString str)
+        {
+            if (str.VirtualAddr == -1)
+                mem.write(str);
+
+            sys.syscall(v0: call_codes.CONSOLE_WRITE_LINE, a2: str.VirtualAddr, a3: 0,
+                t0: str.Length);
+            byte[] return_buffer = new byte[4];
+            m_read(0, ref return_buffer);
+
+            int result = BitConverter.ToInt32(return_buffer);
+            return result;
         }
     }
 }

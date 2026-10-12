@@ -88,6 +88,9 @@ namespace mOS.mk_shell
 
             console.Print($"Wired:     ", foreground: mOSColor.Green);
             console.PrintLine($"{info.Wired.FormatSize()}", foreground: mOSColor.White);
+
+            console.Print($"Free:     ", foreground: mOSColor.Green);
+            console.PrintLine($"{info.Free.FormatSize()}", foreground: mOSColor.White);
         }
 
         private void run_proc()

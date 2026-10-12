@@ -5,7 +5,7 @@ using mOSLib.functions;
 using mOSLib.types;
 namespace mShell
 {
-    public class mOSShell
+    public class mOSShell : ABIManaged
     {
         private libmOS lib;
 
@@ -14,30 +14,16 @@ namespace mShell
         {
             if (lib == null) lib = libmOS.init();
 
-            //    mString line = lib.console_readline();
+            lib.console_write_line(new mString("escreva algo: "));
+            mString line = lib.console_readline();
 
-            //     lib.mem_free(line);
-
-            int addr = lib.mem_alloc(50000);
-
-
-            int freed = lib.mem_free(addr);
-            mString str = new mString("Teste 123");
-            lib.mem_write(str);
-
-            mString str2 = new mString("Uma outra string muito maior que a primeira em termos de.");
-            lib.mem_write(str2);
-
-            mString strLeituraStr1 = lib.mem_read<mString>(addr: 0);
-            mString strLeituraStr2 = lib.mem_read<mString>(addr: 26);
-            strLeituraStr2.Value = "Uma outra string muito maior que a primeira em termos de.";
-
-
-            lib.mem_write(strLeituraStr2);
-
-            mString novaRefLine = lib.mem_read<mString>(addr: 4096);
-
-            return lib.process_pause();
+            lib.console_write_line(new mString("você escreveu: " + line.Value));
+              
+            Thread.Sleep(500);
+            lib.console_write_line(new mString("Pressione uma tecla para encerrar"));
+            lib.console_readchar();
+             
+            return 1;  
         }
 
         [Extern]

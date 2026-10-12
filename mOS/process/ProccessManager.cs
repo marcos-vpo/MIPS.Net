@@ -36,6 +36,9 @@ namespace mOS.process
                 {
                     IOResult? res = stg.ReadAllBytes(path);
 
+            //        for(int i = 0; i < 10000; i++)
+                    mos_kernel.KernelHeap.HeapAlloc(res.Data.Length);
+
                     ProcessEntry pe = new ProcessEntry
                     {
                         UpTime = DateTime.Now.Ticks,
@@ -108,33 +111,42 @@ namespace mOS.process
         List<Tuple<ProcessEntry, ProcessHeapPage[]>> _archiveds = new List<Tuple<ProcessEntry, ProcessHeapPage[]>>();
         internal void CurrentProgramExit()
         {
-            List<ProcessHeapPage> code_pages = new List<ProcessHeapPage>();
-            ProcessEntry pe = table.ReadObject<ProcessEntry>(current_pId);
-            if (pe != null)
-            {
-                IReadOnlyCollection<ProcessHeapPage> pages = process_heap.GetProcessPages(current_pId);
+            int pidExit = int.Parse(current_pId.ToString());
+            current_pId = -1;
 
-                foreach (ProcessHeapPage proccess_page in pages)
+            Task.Run(() =>
+            {
+                Thread.Sleep(1000);
+                List<ProcessHeapPage> code_pages = new List<ProcessHeapPage>();
+                ProcessEntry pe = table.ReadObject<ProcessEntry>(pidExit);
+
+                if (pe != null)
                 {
-                    if (proccess_page.Usage == PHeapUsage.CODE)
-                    {
-                        process_heap.Detach(proccess_page);
-                        code_pages.Add(proccess_page);
-                    }
-                    else
+                    IReadOnlyCollection<ProcessHeapPage> pages = process_heap.GetProcessPages(pidExit);
+                    syscall(v0: 521, a0: pe.PhysicalProgramAddr, k0: true);
+                    foreach (ProcessHeapPage proccess_page in pages)
                     {
                         process_heap.Free(proccess_page);
+                        //continue;
+                        //if (proccess_page.Usage == PHeapUsage.CODE)
+                        //{
+                        //    process_heap.Detach(proccess_page);
+                        //    code_pages.Add(proccess_page);
+                        //}
+                        //else
+                        //{
+                        //    process_heap.Free(proccess_page);
+                        //}
                     }
+
+                
+
+                    table.FreeObject(pe.VirtualAddr);
+
+                    p_list.Remove(pidExit); 
+                    //        _archiveds.Add(new Tuple<ProcessEntry, ProcessHeapPage[]>(pe, code_pages.ToArray()));
                 }
-
-                syscall(v0: 521, a0: pe.PhysicalProgramAddr, k0: true);
-
-                table.FreeObject(pe.VirtualAddr);
-
-                p_list.Remove(current_pId);
-                current_pId = -1;
-                _archiveds.Add(new Tuple<ProcessEntry, ProcessHeapPage[]>(pe, code_pages.ToArray()));
-            }
+            });
         }
 
         internal ProcessInfo[] AllProcesses()
@@ -222,6 +234,11 @@ namespace mOS.process
         internal void CurrentProcessWrite(int addr, ref byte[] b)
         {
             process_heap.Write(current_pId, addr, ref b);
+        }
+
+        internal void CurrentProcessRead(int addr, ref byte[] b)
+        {
+            process_heap.Read(current_pId, addr, ref b);
         }
 
         internal ProcessEntry GetCurrent()

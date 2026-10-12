@@ -44,6 +44,11 @@ _configure_syscalls:
     la $a1, ._console_read_line
     jal ._configure_code
 
+    # write_line
+    li $a0, 15
+    la $a1, ._console_write_line
+    jal ._configure_code
+
 	# proc_pause
     li $a0, 99
     la $a1, ._sys_program_pause
@@ -67,12 +72,17 @@ _configure_code:
 
     jr $ra
 
+_console_write_line:
+	jal .console:write_line
 
 _console_read_char:
 	jal .console:read_char
 
 _console_read_line:
 	jal .console:read_line
+
+_sys_progra_register_resume:
+    
 
 _sys_program_pause:
 	la $k1, ._kernel_loop

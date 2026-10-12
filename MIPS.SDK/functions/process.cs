@@ -15,11 +15,11 @@
         public int kill() { return 0; }
         public int pause() => sys.syscall(v0: call_codes.PROCESS_STOP, k0: true);
         public int status() { return 0; }
-        public int exit() => sys.syscall(v0: call_codes.PROCESS_EXIT);
+        public int exit() => sys.syscall(v0: call_codes.PROCESS_EXIT, k0: true);
 
         public int getpid()
         {
-            var res = sys.syscall(call_codes.SELF_PID, k1: 0);
+            var res = sys.syscall(call_codes.SELF_PID, k0: true);
             return res;
         }
     }

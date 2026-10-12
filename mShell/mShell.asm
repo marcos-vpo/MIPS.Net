@@ -6,11 +6,14 @@ _main:
    la $a0, ._ffi_wait_up 
    syscall
     
-   li $v0, 415              #  register on_resume
-   la $a0, ._resume
-   syscall
+ #  li $v0, 415              #  register on_resume
+ #  la $a0, ._resume
+#   syscall
 
    jal .mOSShell:ShellMain
+
+  # li $v0, 99
+   syscall
 
 _resume:
    jal .mOSShell:OnResume 

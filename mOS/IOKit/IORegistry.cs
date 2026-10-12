@@ -11,6 +11,9 @@ namespace mOS.IOKit
 
         public void Register(int deviceAddress)
         {
+            if (services.Any(s => s.IsAddressOwnerOf(deviceAddress)))
+                throw new Exception("Device already registered in provided address");
+
             int deviceAddr = deviceAddress;
             byte[] dev_header = new byte[10];
             m_read(deviceAddr, ref dev_header);

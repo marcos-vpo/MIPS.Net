@@ -93,8 +93,8 @@ namespace MIPS.Net.InstructionSet
 
                     if (resVal != null)
                     {
-                        //      if (resVal is int)
-                        //            MIPS_CPU.Instance.Registers[$"$v0"] = (int)resVal;
+                              if (resVal is int)
+                                    MIPS_CPU.Instance.Registers[$"$v0"] = (int)resVal;
                     }
 //
                 //    Thread.Sleep(100);
