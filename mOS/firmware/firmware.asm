@@ -19,6 +19,9 @@
 
 .text
 _firmware_main:
+  #  li $v0, 400
+  #  syscall
+
     la $gp, ._firmware_main
     addi $gp, $gp, 12
     jal ._init_usb_01
@@ -31,9 +34,9 @@ _firmware_main:
     addi $gp, $gp, 36
     jal ._init_usb_03
 
-    la $gp, ._firmware_main
-    addi $gp, $gp, 48
-    jal ._init_usb_04
+   # la $gp, ._firmware_main
+ #   addi $gp, $gp, 48
+  #  jal ._init_usb_04
 
     jal ._activate_usb_all
 
@@ -185,7 +188,7 @@ _activate_usb_all:
     li $s1, 0x04
     la $s2, usb_04_addr
     lw $s2, 0($s2) # load base addr
- #   jal .USB_MAP_BIOS 
+  #  jal .USB_MAP_BIOS 
 
     jal ._load_kernel
 

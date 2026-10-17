@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing.Printing;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
-using MIPS.Abi;
-using mOS.k_objects;
+﻿using MIPS.Abi; 
 using mOS.memory;
 using mOS.process_heap.ph_obj;
 
@@ -21,13 +12,11 @@ namespace mOS.process_heap
         private readonly int BASE_ADDR = 0;
         const int PAGE_SIZE = 4096;
 
-        private readonly PageAllocator pageAlloc;
-   //     private readonly ProcessVirtualHeapManager virtualHeap;
+        private readonly PageAllocator pageAlloc; 
         public ProcessHeapManager(int baseAddrMap, PageAllocator pa)
         {
             BASE_ADDR = baseAddrMap;
-            pageAlloc = pa;
-    //        virtualHeap = new ProcessVirtualHeapManager();
+            pageAlloc = pa; 
 
             int hp_addr = BASE_ADDR;
             byte[] empty = new byte[8];
@@ -70,10 +59,7 @@ namespace mOS.process_heap
         // aloca uma nova página e grava no .space kernel_heap_map
         // de acordo com o retorno de FindFreeEntryAddr
         public AllocResult HeapAlloc(int pId, int size, int usage)
-        {
-      //      int virtualAddr = virtualHeap.FindFreeVirtualAddr(size);
-      //      if (virtualAddr > -1) return virtualAddr;
-
+        {  
             int[] physical_pages = new int[0];
             pageAlloc.Allocate(size, out physical_pages);
 
@@ -107,9 +93,7 @@ namespace mOS.process_heap
 
                 _pages.Add(entry);
             }
-
-       //     virtualHeap.UpdatePages(_pages);
-
+             
             return new AllocResult(addrResult, physical_pages);
         }
 
@@ -271,80 +255,6 @@ namespace mOS.process_heap
                 remaining -= bytesInThisPage;
                 currentVirtualAddr += bytesInThisPage;
             }
-        }
-
-        /*
-        public int WriteObject(int pId, mOSObject obj)
-        {
-            obj.Set(obj);
-            byte[] objBin = obj.Serialize();
-            int objTupleLen = 12 + objBin.Length;
-
-            if (obj.VirtualAddr != -1) return virtualHeap.UpdateObj(obj, objBin);
-
-            int virtualAddr = virtualHeap.FindFreeVirtualAddr(objTupleLen);
-
-            if (virtualAddr == -1)
-            {
-                HeapAlloc(pId, objTupleLen, PHeapUsage.DATA);
-                virtualAddr = virtualHeap.FindFreeVirtualAddr(objTupleLen);
-                if (virtualAddr == -1)
-                    throw new Exception("Process-heap are full. TO-DO: correctly handle this! (future)");
-            }
-
-            virtualHeap.WriteObj(virtualAddr, obj, objBin);
-
-            obj.SetVirtualAddr(virtualAddr);
-
-            return virtualAddr;
-        }
-
-        internal T ReadObject<T>(int pId, int virtualHeapAddr) where T : mOSObject
-        {
-            const int HEADER_SIZE = 12;
-
-            if (virtualHeapAddr < 0)
-                return null;
-
-            List<byte> fullPayload = new List<byte>();
-
-            int currentAddr = virtualHeapAddr;
-            short flags = 0;
-
-            while (currentAddr != -1)
-            {
-                byte[] objHeader;
-                byte[] objRaw;
-
-                virtualHeap.ReadObject(currentAddr, out objHeader, out objRaw);
-
-                // objeto inexistente ou free
-                if (objRaw.Length == 0)
-                    return null;
-
-                // acumula payload
-                fullPayload.AddRange(objRaw);
-
-                // guarda flags do root
-                if (currentAddr == virtualHeapAddr)
-                    flags = BitConverter.ToInt16(objHeader[2..4]);
-
-                // próximo da cadeia
-                currentAddr = BitConverter.ToInt32(objHeader[4..8]);
-            }
-
-            // instancia o objeto lógico
-            Type t = typeof(T);
-            mOSObject obj = (mOSObject)Activator.CreateInstance(t);
-            obj.Set(obj);
-
-            obj.Desserialize(fullPayload.ToArray());
-
-            obj.SetVirtualAddr(virtualHeapAddr);
-            obj.SetFlags(flags);
-
-            return (T)obj;
-        }
-        */
+        } 
     }
 }

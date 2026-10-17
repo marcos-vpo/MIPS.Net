@@ -4,14 +4,7 @@ using MIPS.Net.SoC;
 namespace MIPS.Abi
 {
     public abstract class ABIManaged
-    {
-       
-        //protected void asm(string asm)
-        //{
-        //   byte[] code = MIPSCompiler.CompileInstructions(asm);
-        //   MotherBoard.Instance.CPU.Process(code);
-        //}
-
+    { 
         protected int m_read(int address, ref byte[] data)
         {
             DMA.RequestData(address, ref data);
@@ -60,7 +53,7 @@ namespace MIPS.Abi
 
             if (MIPS_CPU.InLock())
             {
-
+                // todo: precisa tratar isso..
             }
 
             cpu.Process(assembly);

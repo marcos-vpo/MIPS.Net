@@ -21,6 +21,7 @@ namespace NetPC.Controllers
         public const byte F_SET_POSITION = 0xF5;
         public const byte F_FLUSH = 0xF6;
         public const byte F_LENGTH = 0xF7;
+        public const byte DIR_EXISTS = 0xF8;
     }
 
 
@@ -81,12 +82,31 @@ namespace NetPC.Controllers
                 case StorageCmd.F_LENGTH: Length(raw); break;
                 case StorageCmd.F_FLUSH: Flush(raw); break;
                 case StorageCmd.F_SET_POSITION: SetPosition(raw); break;
+                case StorageCmd.DIR_EXISTS: DirExists(raw, readed - 10); break;
+                case StorageCmd.FETCH_FILES_LIST: ListFiles(raw, readed - 10); break;  
             }
         }
 
-        // =========================
-        // EXISTENTES (INALTERADOS)
-        // =========================
+        private static void DirExists(byte[] raw, int len)
+        {
+            // Lê o caminho do diretório enviado no payload
+            string dirName = Encoding.UTF8.GetString(raw, 0, len).TrimEnd('\0');
+            string fullPath = root_dir + dirName.Replace("/", "\\");
+
+            // Verifica se o diretório existe no disco
+            bool exists = Directory.Exists(fullPath);
+
+            // Monta a resposta seguindo o padrão dos comandos (tamanho + comando + payload de resposta)
+            // Aqui retornamos um byte (1 para verdadeiro, 0 para falso) indicando a existência
+            byte[] resp = new byte[4 + 1 + 1]; // 4 bytes (tamanho) + 1 byte (comando) + 1 byte (resultado booleano)
+
+            Array.Copy(BitConverter.GetBytes(resp.Length - 4), 0, resp, 0, 4);
+            resp[4] = StorageCmd.DIR_EXISTS;
+            resp[5] = (byte)(exists ? 0x01 : 0x00);
+
+            PORT.SendResponse(resp);
+        }
+
 
         private static void ListDirectories(byte[] raw, int len)
         {
@@ -105,6 +125,37 @@ namespace NetPC.Controllers
                 data.Write(BitConverter.GetBytes(di.GetFiles().Sum(f => f.Length)));
                 data.Write(Encoding.ASCII.GetBytes(di.Name));
                 data.WriteByte(0);
+            }
+
+            ms.Write(BitConverter.GetBytes((int)data.Length));
+            data.Position = 0;
+            data.CopyTo(ms);
+
+            PORT.SendResponse(raw);
+        }
+
+        private static void ListFiles(byte[] raw, int len)
+        {
+            string dir = Encoding.UTF8.GetString(raw, 0, len).TrimEnd('\0');
+            string full = root_dir + dir.Replace("/", "\\");
+
+            using MemoryStream ms = new MemoryStream(raw);
+            using MemoryStream data = new MemoryStream();
+
+            // Verifica se o diretório existe antes de tentar listar
+            if (Directory.Exists(full))
+            {
+                foreach (var fi in new DirectoryInfo(full).GetFiles())
+                {
+                    // Estrutura de cada arquivo: 
+                    // creation (8b) + last_write (8b) + last_access (8b) + size (8b) + name (string ASCII terminada em \0)
+                    data.Write(BitConverter.GetBytes(fi.CreationTime.Ticks));
+                    data.Write(BitConverter.GetBytes(fi.LastWriteTime.Ticks));
+                    data.Write(BitConverter.GetBytes(fi.LastAccessTime.Ticks));
+                    data.Write(BitConverter.GetBytes(fi.Length));
+                    data.Write(Encoding.ASCII.GetBytes(fi.Name));
+                    data.WriteByte(0); // Delimitador nulo do nome
+                }
             }
 
             ms.Write(BitConverter.GetBytes((int)data.Length));
@@ -182,6 +233,7 @@ namespace NetPC.Controllers
 
                 PORT.SendResponse(response);
             }
+            else PORT.SendResponse(new byte[4]);
         }
 
         // =========================

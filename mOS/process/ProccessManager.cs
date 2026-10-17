@@ -35,7 +35,7 @@ namespace mOS.process
                 using (IOStorageService stg = new IOStorageService())
                 {
                     IOResult? res = stg.ReadAllBytes(path);
-
+                    if (res == null) return;
             //        for(int i = 0; i < 10000; i++)
                     mos_kernel.KernelHeap.HeapAlloc(res.Data.Length);
 

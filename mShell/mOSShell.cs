@@ -13,7 +13,7 @@ namespace mShell
         public int ShellMain()
         {
             if (lib == null) lib = libmOS.init();
-
+ 
             lib.console_write_line(new mString("escreva algo: "));
             mString line = lib.console_readline();
 

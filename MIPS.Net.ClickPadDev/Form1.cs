@@ -14,9 +14,7 @@ namespace MIPS.Net.ClickPadDev
         MDHardware hw = null;
         private void Form1_Load(object sender, EventArgs e)
         {
-            hw = new MDHardware();
-            hw.OnDataReceived += Hw_OnDataReceived;
-            hw.Connect(13560, 0x5D);
+
         }
 
         private void Hw_OnDataReceived(byte[] data, int readed)
@@ -57,6 +55,7 @@ namespace MIPS.Net.ClickPadDev
             Array.Copy(BitConverter.GetBytes(x), 0, b, 0, 4);
             Array.Copy(BitConverter.GetBytes(y), 0, b, 4, 4);
 
+            if (hw == null) return;
             hw.SendData(b);
             lbOut.Text = $"OUT {hw.SEND_DATA_MS} ms";
         }
@@ -73,7 +72,14 @@ namespace MIPS.Net.ClickPadDev
                 });
                 return 0;
             });
-        
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            hw = new MDHardware();
+            hw.OnDataReceived += Hw_OnDataReceived;
+            hw.Connect(int.Parse(textBox1.Text), 0x5D);
         }
     }
 }

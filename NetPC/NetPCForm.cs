@@ -423,20 +423,28 @@ namespace NetPC
             sanDisplay1.Focus();
         }
 
-        public void MIPS_OnClock(short clock_status, double frequency, int energyLevel)
+        public async void MIPS_OnClock(short clock_status, double frequency, int energyLevel)
         {
-            if (!inst_enabled) return;
-            if (InvokeRequired)
-                panelClock.Invoke(() =>
-                {
+            return;
+            try
+            {
+                if (!inst_enabled) return;
+                if (InvokeRequired)
+                    panelClock.Invoke(() =>
+                    {
+                        panelClock.BackColor = (clock_status == 0
+                            ? Color.Black
+                            : Color.Green);
+                    });
+                else
                     panelClock.BackColor = (clock_status == 0
-                        ? Color.Black
-                        : Color.Green);
-                });
-            else
-                panelClock.BackColor = (clock_status == 0
-                 ? Color.Black
-                 : Color.Green);
+                     ? Color.Black
+                     : Color.Green);
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
 

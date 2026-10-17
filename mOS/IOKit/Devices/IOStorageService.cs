@@ -103,6 +103,72 @@ namespace mOS.IOKit.Devices
             return dis.ToArray();
         }
 
+        public Directory_Info[] ListFiles(string baseDir)
+        {
+            if (!IOServiceActive) return [];
+
+            List<Directory_Info> filesList = new List<Directory_Info>();
+
+            io_service.SetMode(IOStorageCommand.FETCH_FILES_LIST);
+            io_service.PrepareBuffer(Encoding.ASCII.GetBytes(baseDir));
+            io_service.Fire();
+
+            IOResult? result = io_service.Result();
+
+            if (result == null) return [];
+
+            byte[] res_b = result.Data;
+
+            io_service.SetMode(IOStorageCommand.IDLE);
+
+            int readed = 0;
+
+            byte[] creation_b = new byte[8];
+            byte[] last_write_b = new byte[8];
+            byte[] last_access_b = new byte[8];
+            byte[] size_b = new byte[8];
+
+            StringBuilder sb = new StringBuilder();
+
+            while (readed < res_b.Length)
+            {
+                if (readed + 32 > res_b.Length) break; // Garante que há espaço para os metadados fixos
+
+                Array.Copy(res_b, readed, creation_b, 0, 8);
+                readed += 8;
+
+                Array.Copy(res_b, readed, last_write_b, 0, 8);
+                readed += 8;
+
+                Array.Copy(res_b, readed, last_access_b, 0, 8);
+                readed += 8;
+
+                Array.Copy(res_b, readed, size_b, 0, 8);
+                readed += 8;
+
+                while (readed < res_b.Length)
+                {
+                    byte b = res_b[readed++];
+                    if (b == 0) break;
+                    sb.Append((char)b);
+                }
+
+                Directory_Info fi = new Directory_Info
+                {
+                    Creation = BitConverter.ToInt64(creation_b),
+                    Last_Write = BitConverter.ToInt64(last_write_b),
+                    Last_Access = BitConverter.ToInt64(last_access_b),
+                    Size = BitConverter.ToInt64(size_b),
+                    Name = sb.ToString()
+                };
+
+                sb.Clear();
+                filesList.Add(fi);
+            }
+
+            return filesList.ToArray();
+        }
+
         public void Dispose()
         {
             if (!IOServiceActive) return;
@@ -258,6 +324,27 @@ namespace mOS.IOKit.Devices
             io_service.SetMode(IOStorageCommand.IDLE);
 
             return res.Data[0] == IOStorageCommand.F_FLUSH;
+        }
+
+        internal bool DirExists(string path)
+        {
+            if (!IOServiceActive) return false;
+
+            io_service.SetMode(IOStorageCommand.DIR_EXISTS);
+
+            // Prepara o buffer com o caminho do diretório codificado em UTF-8
+            byte[] pathBytes = Encoding.UTF8.GetBytes(path);
+            io_service.PrepareBuffer(pathBytes);
+            io_service.Fire();
+
+            var res = io_service.Result();
+            if (res == null || res.Data.Length < 2) return false;
+
+            io_service.SetMode(IOStorageCommand.IDLE);
+
+            // Valida se o comando retornado confere e lê o byte de resultado (0x01 ou 0x00)
+            // Considerando o padrão de resposta onde res.Data[0] é o comando e res.Data[1] é o valor booleano
+            return res.Data[0] == IOStorageCommand.DIR_EXISTS && res.Data[1] == 0x01;
         }
 
         internal bool SetPosition(int handle, long position)

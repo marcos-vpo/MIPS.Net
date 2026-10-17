@@ -83,7 +83,9 @@ namespace mOSLib
 
         public int sys_call(int v0, int? a0 = null, int? a1 = null, int? a2 = null, int? a3 = null, bool k0 = true, int k1 = 0)
             => sys.syscall(v0, a0, a1, a2, a3, k0: k0, k1: k1);
+
         public int sys_yeld() => sys.yield();
+
         public int uptime() => sys.uptime();
 
         public int thread_create() => thread.create();

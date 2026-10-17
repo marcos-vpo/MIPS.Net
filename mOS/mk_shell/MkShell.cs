@@ -40,13 +40,14 @@ namespace mOS.mk_shell
             console.PrintLine("");
             console.PrintLine("This is MKShell");
             console.PrintLine("Type a command:");
-            console.Print("# ");
+            console.Print($"{current_dir} # ");
             console.Flush();
-             
+
             while (true)
             {
                 string command = console.ReadLine();
 
+                if (command.StartsWith("cd")) run_cd(command.Replace("cd ", ""));
                 if (command == "ls") run_ls();
                 else if (command == "cls" || command == "clear") run_clear();
                 else if (command.StartsWith("run"))
@@ -72,6 +73,24 @@ namespace mOS.mk_shell
                 console.Flush();
             }
 
+        }
+
+        private void run_cd(string dir)
+        {
+            using (IOStorageService stg = new IOStorageService())
+            {
+                var d = dir.StartsWith("/") ? dir : $"{current_dir}/{dir}";
+                var exists = stg.DirExists(d);
+                if (exists)
+                {
+                    current_dir = d;
+                    console.PrintLine($"{current_dir}");
+                }
+                else
+                {
+                    console.PrintLine("Directory does not exist", foreground: mOSColor.Yellow);
+                }
+            }
         }
 
         private void run_mem()
@@ -106,7 +125,8 @@ namespace mOS.mk_shell
 
         private void run_lauch_shell(string file)
         {
-            mos_kernel.ProcessManager.Launch("/applications/mOSShell/mShell.mex", "root");
+            var f = file.StartsWith("/") ? file : $"{current_dir}/{file}";
+            mos_kernel.ProcessManager.Launch(f, "root");
         }
 
         private void run_clear()
@@ -121,6 +141,7 @@ namespace mOS.mk_shell
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
                 Directory_Info[] dirs = storage.ListDirectories(current_dir);
+                Directory_Info[] files = storage.ListFiles(current_dir);
                 sw.Stop();
                 console.PrintLine($"TYPE      LAST_WRITE             SIZE         NAME");
                 console.PrintLine($"+---------+----------------------+------------+-------------------");
@@ -129,11 +150,17 @@ namespace mOS.mk_shell
                 foreach (Directory_Info di in dirs)
                 {
                     sb.AppendLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
-//                    console.PrintLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
+                    //                    console.PrintLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
+                }
+
+                foreach (Directory_Info fi in files)
+                {
+                    sb.AppendLine($"[file]     {DateTime.FromBinary(fi.Last_Write)}    {($"{fi.Size}".PadRight(7, ' '))}      {fi.Name}");
+                    //                    console.PrintLine($"[dir]     {DateTime.FromBinary(di.Last_Write)}    {($"{di.Size}".PadRight(7, ' '))}      {di.Name}");
                 }
 
                 console.PrintLine(sb.ToString());
-                console.PrintLine($"\n{dirs.Length} directories reached in ~{sw.ElapsedMilliseconds}ms");
+                console.PrintLine($"\n{dirs.Length} directories and {files.Length} reached in ~{sw.ElapsedMilliseconds}ms");
                 console.PrintLine("\n");
 
                 console.Flush();

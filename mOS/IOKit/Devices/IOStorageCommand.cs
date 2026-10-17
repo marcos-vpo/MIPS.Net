@@ -19,7 +19,7 @@ namespace mOS.IOKit.Devices
         public const byte F_SET_POSITION = 0xF5;
         public const byte F_FLUSH = 0xF6;
         public const byte F_LENGTH = 0xF7;
-
+        public const byte DIR_EXISTS = 0xF8;
 
     }
 

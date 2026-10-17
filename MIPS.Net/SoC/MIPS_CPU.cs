@@ -274,12 +274,12 @@ namespace MIPS.Net.SoC
                         break;
                     }
 
-                    //    if (clock_status == 0) clock_status = 1;
-                    //   else if (clock_status == 1) clock_status = 0;
+                    //if (clock_status == 0) clock_status = 1;
+                    //else if (clock_status == 1) clock_status = 0;
 
-                    // enviar sinal de clock para a Motherboard
-                    //       if (Capture != null)
-                    //         try { Capture.MIPS_OnClock(clock_status, Frequency, ClockInterval); } catch { }
+                    //// enviar sinal de clock para a Motherboard
+                    //if (Capture != null) 
+                    //    Capture.MIPS_OnClock(clock_status, Frequency, ClockInterval);
 
                     // há interrupções pendentes?
                     if (pendingInterruption != null)

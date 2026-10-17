@@ -5,11 +5,9 @@ _main:
    li $v0, 410              #  enable ffi
    la $a0, ._ffi_wait_up 
    syscall
- #  li $v0, 415              #  register on_resume
- #  la $a0, ._resume
-#   syscall
    jal .mOSShell:ShellMain
-  # li $v0, 99
+   # li $v0, 99 -- opcional -> o retorno de ShellMain já será colocado em $v0 automaticamente
+   # porém em um cenário ideal o correto seria impor isso aqui, até por segurança
    syscall
 _resume:
    jal .mOSShell:OnResume 

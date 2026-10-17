@@ -43,7 +43,7 @@ namespace mOSLib.functions
                     break;
                 }
 
-       
+
                 return_data.Add(page);
             }
 
@@ -51,8 +51,8 @@ namespace mOSLib.functions
             int start_addr = return_data[1];
 
             mem.attatch(validPages: return_data[2..]);
-              
-            mString mstr = mem.read<mString>(start_addr); 
+
+            mString mstr = mem.read<mString>(start_addr);
             return mstr;
         }
 
@@ -61,8 +61,7 @@ namespace mOSLib.functions
             if (str.VirtualAddr == -1)
                 mem.write(str);
 
-            sys.syscall(v0: call_codes.CONSOLE_WRITE_LINE, a2: str.VirtualAddr, a3: 0,
-                t0: str.Length);
+            sys.syscall(v0: call_codes.CONSOLE_WRITE_LINE, a2: str.VirtualAddr, a3: 0, t0: str.Length);
             byte[] return_buffer = new byte[4];
             m_read(0, ref return_buffer);
 
